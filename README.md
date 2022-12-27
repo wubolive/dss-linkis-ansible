@@ -1,10 +1,4 @@
 # DSS+Linkis Ansible一键安装脚本
-DSS1.1.1 &amp; Linkis 1.3.0 Ansible 一键部署脚本
-
-作者：wubolive
-Q Q：1049635685
-邮箱：wubolive@foxmai.com
-Github：https://github.com/wubolive/dss-linkis-ansible
 
 ## 一、简介
 
