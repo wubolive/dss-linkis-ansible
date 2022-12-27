@@ -4,11 +4,11 @@
 
 为解决繁琐的部署流程，简化安装步骤，本脚本提供一键安装最新版本的DSS+Linkis环境；部署包中的软件采用我自己编译的安装包，并且为最新版本：`DSS1.1.1` + `Linkis1.3.0`。
 
-因安装包高达3.5G，无法上传到Github上，可使用如下方式获取安装包：
+获取安装包：https://github.com/wubolive/dss-linkis-ansible/releases
 
-- 链接: https://pan.baidu.com/s/1NYVFqyVwMdMQUBjmeUtGmQ?pwd=kddf 
-- 提取码: kddf 
-
+如从Github上下载慢，也可使用如下方式获取安装包：
+- 链接: https://pan.baidu.com/s/1NYVFqyVwMdMQUBjmeUtGmQ?pwd=kddf
+- 提取码: kddf
 
 ### 1.1 版本介绍
 
@@ -30,7 +30,7 @@
 | Visualis         | 1.0.0        | /opt/visualis-server  | http://<服务器IP>:9088                   |
 | Qualitis         | 0.9.2        | /opt/qualitis         | http://<服务器IP>:8090                   |
 | Streamis         | 0.2.0        | /opt/streamis         | http://<服务器IP>:9188                   |
-| Soop             | 1.4.6        | /opt/sqoop            | sqoop                                    |
+| Sqoop             | 1.4.6        | /opt/sqoop            | sqoop                                    |
 | Exchangis        | 1.0.0        | /opt/exchangis        | http://<服务器IP>:8028                   |
 
 ## 二、部署前注意事项
@@ -47,8 +47,7 @@
 
 本案例部署主机IP为`192.168.1.52`，以下步骤请按照自己实际情况更改。
 
-#### 3.1 安装前设置
-
+### 3.1 安装前设置
 ```bash
 ### 安装ansible
 $ yum -y install epel-release
@@ -58,10 +57,12 @@ $ yum -y install ansible
 $ ssh-keygen -t rsa
 $ ssh-copy-id root@192.168.1.52
 ```
-
-#### 3.2 部署linkis+dss
+### 3.2 部署linkis+dss
 
 ```bash
+### 获取安装包
+$ wget https://github.com/wubolive/dss-linkis-ansible/releases/download/v1.0.0/dss-linkis-ansible.tar.gz
+
 ### 解压安装包
 $ tar zxvf dss-linkis-ansible.tar.gz
 $ cd dss-linkis-ansible
@@ -72,11 +73,13 @@ dss-linkis-ansible
 ├── playbooks      # playbooks剧本
 ├── README.md      # 说明文档
 └── roles          # 角色配置
+
 ### 配置部署主机（注：ansible_ssh_host的值不能设置127.0.0.1）
 $ vim hosts
 [deploy]
 dss-service ansible_ssh_host=192.168.1.52 ansible_ssh_port=22
-# 一键安装Linkis+DSS
+
+### 一键安装Linkis+DSS
 $ ansible-playbook playbooks/all.yml
 ......
 TASK [dss : 打印访问信息] *****************************************************************************************
@@ -94,7 +97,7 @@ ok: [dss-service] => {
 
 ![image](https://user-images.githubusercontent.com/31678260/209619054-b776a4e6-2044-4855-8185-e57a269d2306.png)
 
-#### 3.3 部署其它服务
+### 3.3 部署其它服务
 
 ```bash
 # 安装dolphinscheduler
