@@ -1,6 +1,11 @@
 # DSS+Linkis Ansible一键安装脚本
 DSS1.1.1 &amp; Linkis 1.3.0 Ansible 一键部署脚本
 
+作者：wubolive
+Q Q：1049635685
+邮箱：wubolive@foxmai.com
+Github：https://github.com/wubolive/dss-linkis-ansible
+
 ## 一、简介
 
 为解决繁琐的部署流程，简化安装步骤，本脚本提供一键安装最新版本的DSS+Linkis环境；部署包中的软件采用我自己编译的安装包，并且为最新版本：`DSS1.1.1` + `Linkis1.3.0`。
@@ -9,6 +14,7 @@ DSS1.1.1 &amp; Linkis 1.3.0 Ansible 一键部署脚本
 
 - 链接: https://pan.baidu.com/s/1NYVFqyVwMdMQUBjmeUtGmQ?pwd=kddf 
 - 提取码: kddf 
+
 
 ### 1.1 版本介绍
 
@@ -47,25 +53,26 @@ DSS1.1.1 &amp; Linkis 1.3.0 Ansible 一键部署脚本
 
 本案例部署主机IP为`192.168.1.52`，以下步骤请按照自己实际情况更改。
 
-#### 2.1 安装前设置
+#### 3.1 安装前设置
 
 ```bash
 ### 安装ansible
 $ yum -y install epel-release
 $ yum -y install ansible
+
 ### 配置免密
 $ ssh-keygen -t rsa
 $ ssh-copy-id root@192.168.1.52
 ```
 
-#### 2.2 部署linkis+dss
+#### 3.2 部署linkis+dss
 
 ```bash
 ### 解压安装包
 $ tar zxvf dss-linkis-ansible.tar.gz
 $ cd dss-linkis-ansible
 # 目录说明
-$ dss-linkis-ansible
+dss-linkis-ansible
 ├── ansible.cfg    # ansible 配置文件
 ├── hosts          # hosts主机及变量配置
 ├── playbooks      # playbooks剧本
@@ -77,11 +84,23 @@ $ vim hosts
 dss-service ansible_ssh_host=192.168.1.52 ansible_ssh_port=22
 # 一键安装Linkis+DSS
 $ ansible-playbook playbooks/all.yml
+......
+TASK [dss : 打印访问信息] *****************************************************************************************
+ok: [dss-service] => {
+    "msg": [
+        "*****************************************************************", 
+        "              访问 http://192.168.1.52 查看访问信息                 ", 
+        "*****************************************************************"
+    ]
+}
+
 ```
 
 执行结束后，即可访问：http://192.168.1.52 查看信息页面，上面记录了所有服务的访问地址及账号密码。
 
-#### 2.3 部署其它服务
+![image](https://user-images.githubusercontent.com/31678260/209619054-b776a4e6-2044-4855-8185-e57a269d2306.png)
+
+#### 3.3 部署其它服务
 
 ```bash
 # 安装dolphinscheduler
