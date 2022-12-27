@@ -61,7 +61,7 @@ $ ssh-copy-id root@192.168.1.52
 
 ```bash
 ### 获取安装包
-$ wget https://github.com/wubolive/dss-linkis-ansible/releases/download/v1.0.0/dss-linkis-ansible.tar.gz
+$ wget https://github.com/wubolive/dss-linkis-ansible/releases/download/v1.0.1/dss-linkis-ansible.tar.gz
 
 ### 解压安装包
 $ tar zxvf dss-linkis-ansible.tar.gz
@@ -111,4 +111,20 @@ $ ansible-playbook playbooks/qualitis.yml
 $ ansible-playbook playbooks/streamis.yml
 # 安装exchangis
 $ ansible-playbook playbooks/exchangis.yml
+```
+### 3.4 维护指南
+```
+### 查看实时日志
+$ su - hadoop
+$ tail -f ~/linkis/logs/*.log ~/dss/logs/*.log
+
+### 启动服务（如服务器重启可使用此命令一建启动）
+$ ansible-playbook playbooks/all.yml -t restart
+# 启动其它服务
+$ su - hadoop
+$ cd /opt/dolphinscheduler/bin &&  sh start-all.sh 
+$ cd /opt/visualis-server/bin && sh start-visualis-server.sh
+$ cd /opt/qualitis/bin/ && sh start.sh
+$ cd /opt/streamis/streamis-server/bin/ && sh start-streamis-server.sh
+$ cd /opt/exchangis/sbin/ && ./daemon.sh start server
 ```
