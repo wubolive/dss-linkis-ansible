@@ -1,0 +1,65 @@
+- name: 安装Development tools
+  yum:
+    name: "@Development tools"
+    state: present
+
+- name: 安装依赖包
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - zlib-devel
+    - bzip2-devel
+    - openssl-devel
+    - ncurses-devel
+    - sqlite-devel
+    - readline-devel
+    - tk-devel
+    - gdbm-devel
+    - libpcap-devel
+    - xz-devel
+    - libffi-devel
+
+- name: 下载源码包
+  become: true
+  get_url:
+    url: "https://repo.huaweicloud.com/python/3.7.0/Python-3.7.0.tar.xz"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压源码包
+  shell: 
+    chdir: /tmp/
+    cmd: "tar xf Python-3.7.0.tar.xz"
+
+- name: 配置python3
+  shell:
+    chdir: /tmp/Python-3.7.0
+    cmd: "./configure --prefix=/usr/local/python3"
+
+- name: 编译安装python3
+  shell:
+    chdir: /tmp/Python-3.7.0
+    cmd: "make && make install"
+
+- name: 设置python3软连接
+  file:
+    src: /usr/local/python3/bin/python3
+    dest: /usr/bin/python3
+    state: link
+
+- name: 设置pip3软连接
+  file:
+    src: /usr/local/python3/bin/pip3
+    dest: /usr/bin/pip3
+    state: link
+
+- name: 获取python3版本信息
+  command: "python3 -V"
+  register: python3_version
+
+- name: 打印python3版本
+  debug: var=python3_version

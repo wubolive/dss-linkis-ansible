@@ -1,0 +1,119 @@
+- name: 创建库和用户
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    - CREATE DATABASE streamis DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+    - GRANT ALL PRIVILEGES ON streamis.* TO 'streamis'@'%' IDENTIFIED BY 'streamis';
+    - GRANT ALL PRIVILEGES ON streamis.* TO 'streamis'@'localhost' IDENTIFIED BY 'streamis';
+    - GRANT ALL PRIVILEGES ON streamis.* TO 'streamis'@'{{ inventory_hostname }}' IDENTIFIED BY 'streamis';
+    - FLUSH PRIVILEGES;
+
+- name: 创建程序目录
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist
+    - "{{ STREAMIS_HOME }}"
+
+- name: 下载安装包
+  become: true
+  get_url:
+    url: "http://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz"
+    dest: /tmp/
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist/"
+
+- name: 设置权限
+  become: true
+  command: "chown hadoop.hadoop -R /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist"
+
+- name: 创建安装配置
+  template:
+    src: "{{ item }}.j2"
+    dest: "/opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist/conf/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - db.sh
+    - config.sh
+
+- name: 修改安装脚本
+  lineinfile:
+    dest: "/opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist/bin/install.sh"
+    regexp: '^read'
+    line: "idx=2"
+
+- name: 执行安装脚本
+  shell:
+    chdir: /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/install.sh"
+
+- name: 启动服务
+  shell:
+    chdir: "{{ STREAMIS_HOME }}/streamis-server"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/start-streamis-server.sh"
+  ignore_errors: yes
+
+- name: 检查端口是否运行
+  wait_for: port={{ STREAMIS_SERVER_PORT }} state=started delay=1 timeout=30
+
+- name: 下载streamis前端代码包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-{{ STREAMIS_VERSION }}-dist.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压streamis前端代码包
+  become: true
+  shell: "unzip /tmp/streamis-{{ STREAMIS_VERSION }}-dist.zip -d {{ STREAMIS_HOME }}"
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/conf.d/streamis.conf"
+
+- name: 重载nginx
+  become: true
+  command: "nginx -s reload"
+
+- name: 检查端口是否运行
+  wait_for: port={{ STREAMIS_WEB_PORT }} state=started delay=1 timeout=30
+
+- name: 下载appconn
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-appconn.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 安装appconn
+  become: true
+  shell: "unzip /tmp/streamis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/streamis"
+
+- name: 注册appconn
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/appconn-install.sh streamis {{ ansible_ssh_host }} {{ STREAMIS_WEB_PORT }}"
+  register: appconn_info
+
+- name: 打印注册信息
+  debug: var=appconn_info.stdout_lines
+

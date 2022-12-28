@@ -1,0 +1,109 @@
+- name: 下载安装包
+  become: true
+  get_url:
+    url: "http://repo.huaweicloud.com/apache/hive/hive-{{ HIVE_VERSION }}/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz"
+    dest: /tmp
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz -C /opt/"
+
+- name: 设置软连接
+  become: true
+  file: 
+    src: "/opt/apache-hive-{{ HIVE_VERSION }}-bin"
+    dest: "{{ HIVE_HOME }}"
+    state: link
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop {{ HIVE_HOME }} /opt/apache-hive-{{ HIVE_VERSION }}-bin"
+
+- name: 配置环境变量
+  become: true
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Have Path
+      export HIVE_HOME={{ HIVE_HOME }}
+      export HIVE_CONF_DIR={{ HIVE_HOME }}/conf
+      export HIVE_AUX_JARS_PATH={{ HIVE_HOME }}/lib
+      export HCAT_HOME={{ HIVE_HOME }}/hcatalog
+      export PATH=$PATH:$HIVE_HOME/bin
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: 在hadoop中创建目录
+  shell: "hadoop fs -mkdir -p {{ item }} ; {{ HADOOP_HOME }}/bin/hadoop fs -chmod -R 777 {{ item }}"
+  with_items:
+    - /data/hive/warehouse
+    - /data/hive/tmp
+    - /data/hive/log
+    - /spark-eventlog
+
+- name: 查看hdfs目录
+  shell: "hdfs dfs -ls /data/hive"
+  register: hdfs_info
+
+- name: 打印hdfs目录内容
+  debug: var=hdfs_info
+
+- name: 创建配置文件
+  template: 
+    src: "{{ item }}.j2"
+    dest: "{{ HIVE_HOME }}/conf/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - hive-site.xml
+    - hive-env.sh
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    dest: "{{ HIVE_HOME }}/lib/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 初始化schema
+  shell: "schematool -dbType mysql -initSchema"
+
+- name: 修改MySQL链接信息
+  lineinfile:
+    dest: "{{ HIVE_HOME }}/conf/hive-site.xml"
+    regexp: '^      <value>jdbc:mysql:'
+    line: "      <value>jdbc:mysql://{{ hostvars[groups['mysql'][0]].ansible_ssh_host }}:3306/hive?characterEncoding=utf8&amp;useSSL=false</value>"
+    state: present
+
+- file: path="{{ HIVE_HOME}}/logs" state=directory owner=hadoop group=hadoop
+
+- name: 启动hive
+  shell: "{{ item }}"
+  with_items:
+    - "nohup {{ HIVE_HOME }}/bin/hive --service metastore >> {{ HIVE_HOME }}/logs/metastore.log 2>&1 &"
+    - "nohup {{ HIVE_HOME }}/bin/hive --service hiveserver2 >> {{ HIVE_HOME }}/logs/hiveserver2.log 2>&1 &"
+  tags:
+    - restart
+
+- name: 测试hive
+  shell: "hive -e 'show databases'"
+  register: hive_show
+
+- name: 打印输出
+  debug: var=hive_show.stderr_lines

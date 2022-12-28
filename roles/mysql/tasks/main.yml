@@ -1,0 +1,107 @@
+- name: 卸载mariadb
+  yum: name=mariadb-* state=absent
+
+- name: 安装依赖软件
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - gcc
+    - gcc-c++
+    - libaio
+    - bison
+    - ncurses-devel
+    - readline-devel
+    - autoconf
+
+- name: 创建mysql组
+  group: name=mysql
+
+- name: 创建mysql用户
+  user: name=mysql group=mysql shell=/sbin/nologin
+
+- name: 下载mysql安装包
+  get_url:
+    #url: "http://mirrors.aliyun.com/mysql/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  # 阿里镜像站
+    #url: "http://repo.huaweicloud.com/mysql/Downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 华为镜像站
+    url: "http://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 清华大学镜像站
+    dest: /tmp
+    mode: 0644
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  shell: "tar zxf /tmp/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz -C /tmp/"
+
+- name: 配置mysql程序目录
+  command: "/usr/bin/mv /tmp/mysql-{{ MYSQL_VERSION }}-linux-glibc2.12-x86_64 {{ MYSQL_HOME }}"
+
+- name: 生成my.conf配置文件
+  template: src=my.cnf.j2 dest=/etc/my.cnf
+
+- name: 创建data和logs目录
+  file:
+    name: "{{ item }}"
+    state: directory
+    owner: mysql
+    group: mysql
+  with_items:
+    - "{{ MYSQL_DATA }}"
+    - "{{ MYSQL_HOME }}/logs"
+
+- name: 数据库初始化
+  shell:
+    chdir: "{{ MYSQL_HOME }}/scripts"
+    cmd: "./mysql_install_db --user=mysql --basedir={{ MYSQL_HOME }} --datadir={{ MYSQL_DATA }}"
+
+- name: 配置环境变量
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # MySQL Path
+      export MYSQL_HOME={{ MYSQL_HOME }}
+      export PATH=$PATH:$MYSQL_HOME/bin
+  with_items:
+    - /etc/profile
+    - ~/.bashrc
+    - /home/hadoop/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - ~/.bashrc
+
+- name: 配置service
+  command: "/usr/bin/cp {{ MYSQL_HOME }}/support-files/mysql.server /etc/rc.d/init.d/mysqld"
+
+- name: 配置systemd
+  template: src=mysqld.service.j2 dest=/usr/lib/systemd/system/mysqld.service owner=root
+ 
+- name: 启动mysqld服务
+  shell: "service mysqld restart"
+  #systemd: name=mysqld enabled=yes daemon_reload=yes state=started
+  tags:
+    - restart
+
+- name: 检查端口是否运行
+  wait_for: port=3306 state=started delay=1 timeout=30
+
+- name: 设置密码
+  shell: "mysqladmin -u root password {{ MYSQL_PASSWORD }}"
+
+- name: 测试mysql服务
+  shell: mysql -h127.0.0.1 -uroot -p{{ MYSQL_PASSWORD }} -e "select version();"
+  register: mysql_info
+
+- name: 打印mysql版本
+  debug: var=mysql_info.stdout_lines
+
+- name: 设置root访问权限
+  command:  mysql -h127.0.0.1 -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    - GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '{{ MYSQL_PASSWORD }}' WITH GRANT OPTION;
+    - GRANT ALL PRIVILEGES ON *.* TO 'root'@'{{ inventory_hostname }}' IDENTIFIED BY '{{ MYSQL_PASSWORD }}' WITH GRANT OPTION;
+    - FLUSH PRIVILEGES;
+

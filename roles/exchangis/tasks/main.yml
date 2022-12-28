@@ -1,0 +1,148 @@
+- name: 创建exchangis库和用户
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    # 创建数据库
+    -  CREATE DATABASE exchangis DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+    -  GRANT ALL PRIVILEGES ON exchangis.* TO 'exchangis'@'%' IDENTIFIED BY 'exchangis';
+    -  GRANT ALL PRIVILEGES ON exchangis.* TO 'exchangis'@'localhost' IDENTIFIED BY 'exchangis';
+    -  GRANT ALL PRIVILEGES ON exchangis.* TO 'exchangis'@'{{ inventory_hostname }}' IDENTIFIED BY 'exchangis';
+    -  flush privileges;
+    # 配置token
+    -  INSERT INTO `linkis`.`linkis_mg_gateway_auth_token`(`token_name`,`legal_users`,`legal_hosts`,`business_owner`,`create_time`,`update_time`,`elapse_day`,`update_by`) VALUES ('EXCHANGIS-AUTH','*','*','BDP',curdate(),curdate(),-1,'LINKIS');
+    # 插入hive数据源环境配置
+    -  INSERT INTO `linkis`.`linkis_ps_dm_datasource_env` (`env_name`, `env_desc`, `datasource_type_id`, `parameter`, `create_time`, `create_user`, `modify_time`, `modify_user`) VALUES ('开发环境SIT', '开发环境SIT', 4, '{"uris":"thrift://{{ ansible_ssh_host }}:9083", "hadoopConf":{"hive.metastore.execute.setugi":"true"}}',  now(), NULL,  now(), NULL);
+    -  INSERT INTO `linkis`.`linkis_ps_dm_datasource_env` (`env_name`, `env_desc`, `datasource_type_id`, `parameter`, `create_time`, `create_user`, `modify_time`, `modify_user`) VALUES ('开发环境UAT', '开发环境UAT', 4, '{"uris":"thrift://{{ ansible_ssh_host }}:9083", "hadoopConf":{"hive.metastore.execute.setugi":"true"}}',  now(), NULL,  now(), NULL);
+
+- name: 创建程序目录
+  become: true
+  file:
+    path: "{{ EXCHANGIS_HOME }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+
+- name: 下载安装包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis{{ EXCHANGIS_VERSION }}/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz"
+    dest: /tmp/
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz -C {{ EXCHANGIS_HOME }}"
+
+- name: 设置权限
+  become: true
+  command: "chown hadoop.hadoop -R {{ EXCHANGIS_HOME }}"
+
+- name: 创建安装配置
+  template: 
+    src: "{{ item }}.j2"
+    dest: "{{ EXCHANGIS_HOME }}/config/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - db.sh
+    - config.sh
+
+- name: 修改安装脚本
+  lineinfile:
+    dest: "{{ EXCHANGIS_HOME }}/sbin/install.sh"
+    regexp: '^    read'
+    line: "    yn=y"
+
+- name: 执行安装脚本
+  shell: 
+    chdir: "{{ EXCHANGIS_HOME }}/sbin"
+    cmd: "source /etc/profile ~/.bashrc ; sh install.sh"
+  register: install_info
+
+- name: 打印安装信息
+  debug: var=install_info.stdout_lines
+
+- name: 执行启动脚本
+  shell: 
+    chdir: "{{ EXCHANGIS_HOME }}/sbin"
+    cmd: "source /etc/profile ~/.bashrc ; sh daemon.sh start server"
+  register: start_info
+
+- name: 打印启动信息
+  debug: var=start_info.stdout_lines
+
+- name: 检查端口是否运行
+  wait_for: port={{ EXCHANGIS_SERVER_PORT }} state=started delay=1 timeout=30
+
+- name: 下载前端代码包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis1.0.0/dist.zip"
+    dest: /tmp/
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 压前端安装包
+  become: true
+  shell: "unzip /tmp/dist.zip -d {{ EXCHANGIS_HOME }}/ && chown -R hadoop.hadoop {{ EXCHANGIS_HOME }}/dist"
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/conf.d/exchangis.conf"
+
+- name: 重载nginx
+  become: true
+  command: "nginx -s reload"
+
+- name: 检查端口是否运行
+  wait_for: port={{ EXCHANGIS_WEB_PORT }} state=started delay=1 timeout=30
+
+- name: 下载appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Exchangis/exchangis-appconn.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压appconn包
+  become: true
+  shell: "unzip /tmp/exchangis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown -R hadoop.hadoop {{ DSS_HOME }}/dss-appconns/exchangis"
+
+- name: 注册appconn
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/appconn-install.sh exchangis {{ ansible_ssh_host }} {{ EXCHANGIS_WEB_PORT }}"
+  register: appconn_info
+
+- name: 打印注册信息
+  debug: var=appconn_info.stdout_lines
+
+- name: 下载sqoop物料引擎
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Linkis/engineconn-plugin/sqoop-engineconn.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 安装sqoop物料引擎
+  become: true
+  shell: "unzip /tmp/sqoop-engineconn.zip -d {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/ && chown -R hadoop.hadoop {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/sqoop"
+
+- name: 重启engineplugin服务
+  shell: 
+    chdir: "{{ LINKIS_HOME }}/sbin"
+    cmd: "source /etc/profile ~/.bashrc ; sh linkis-daemon.sh restart cg-engineplugin"

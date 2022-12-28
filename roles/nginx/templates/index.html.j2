@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to DSS!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+    <h1>DataSphere Studio</h1>
+
+    <p> DSS Web: <a href="http://{{ ansible_ssh_host }}:{{ DSS_WEB_PORT }}">http://{{ ansible_ssh_host }}:{{ DSS_WEB_PORT }}</a>
+    <ul>
+        <li>username: hadoop</li>
+        <li>password: hadoop</li>
+    </ul>
+    </p>
+    <p> YARN: <a href="http://{{ ansible_ssh_host }}:8088">http://{{ ansible_ssh_host }}:8088</a></p>
+    <p> Hadoop: <a href="http://{{ ansible_ssh_host }}:50070">http://{{ ansible_ssh_host }}:50070</a></p>
+    <p> Eureka: <a href="http://{{ ansible_ssh_host }}:20303">http://{{ ansible_ssh_host }}:20303</a></p>
+    <p> DolphinScheduler: <a href="http://{{ ansible_ssh_host }}:12345/dolphinscheduler">http://{{ ansible_ssh_host }}:12345/dolphinscheduler</a>
+        <ul>
+            <li>username: hadoop</li>
+            <li>password: hadoop123</li>
+        </ul>
+    </p>
+    <p> Qualitis: <a href="http://{{ ansible_ssh_host }}:{{ QUALITIS_PORT }}">http://{{ ansible_ssh_host }}:{{ QUALITIS_PORT }}</a>
+        <ul>
+            <li>username: admin</li>
+            <li>password: admin</li>
+        </ul>
+     </p>
+    <p> Streamis: <a href="http://{{ ansible_ssh_host }}:{{ STREAMIS_WEB_PORT }}">http://{{ ansible_ssh_host }}:{{ STREAMIS_WEB_PORT }}</a></p>
+    <p> Exchangis: <a href="http://{{ ansible_ssh_host }}:{{ EXCHANGIS_WEB_PORT }}">http://{{ ansible_ssh_host }}:{{ EXCHANGIS_WEB_PORT }}</a></p>
+</body>
+</html>

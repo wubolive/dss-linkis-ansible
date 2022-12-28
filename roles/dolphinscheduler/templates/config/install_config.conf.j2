@@ -1,0 +1,64 @@
+# 这里填 mysql or postgresql
+dbtype="mysql"
+# 数据库连接地址
+dbhost="{{ hostvars[groups['mysql'][0]].ansible_ssh_host }}:{{ MYSQL_PORT }}"
+# 数据库名
+dbname="dolphinscheduler"
+# 数据库用户名，此处需要修改为上面设置的 {user} 具体值
+username="dolphinscheduler"    
+# 数据库密码，如果有特殊字符，请使用 \ 转义，需要修改为上面设置的 {password} 具体值
+password="dolphinscheduler"
+# Zookeeper地址，单机本机是 localhost:2181，记得把 2181 端口带上
+zkQuorum="{{ ansible_ssh_host }}:{{ ZOOKEEPER_PORT }}"
+# 将 DS 安装到哪个目录，不同于现在的目录
+installPath="{{ DOLPHINSCHEDULER_HOME }}"
+# 使用哪个用户部署
+deployUser="hadoop"
+# 邮件配置，以 qq 邮箱为例
+# 邮件协议
+mailProtocol="SMTP"
+# 邮件服务地址
+mailServerHost="smtp.qq.com"
+# 邮件服务端口
+mailServerPort="25"
+# mailSender 和 mailUser 配置成一样即可
+# 发送者
+mailSender="xxx@qq.com"
+# 发送用户
+mailUser="xxx@qq.com"
+# 邮箱密码
+mailPassword="xxx"
+# TLS 协议的邮箱设置为 true，否则设置为 false
+starttlsEnable="true"
+# 开启 SSL 协议的邮箱配置为 true，否则为 false。注意: starttlsEnable 和 sslEnable 不能同时为 true
+sslEnable="false"
+# 邮件服务地址值，参考上面 mailServerHost
+sslTrust="smtp.qq.com"
+# 业务用到的比如 sql 等资源文件上传到哪里，可以设置：HDFS,S3,NONE，单机如果想使用本地文件系统，请配置为 HDFS，因为 HDFS 支持本地文件系统；如果不需要资源上传功能请选择 NONE。强调一点：使用本地文件系统不需要部署 hadoop
+resourceStorageType="HDFS"
+# 这里以保存到本地文件系统为例
+# 注：但是如果你想上传到 HDFS 的话，NameNode 启用了 HA，则需要将 hadoop 的配置文件 core-site.xml 和 hdfs-site.xml 放到 conf 目录下，本例即是放到 /opt/dolphinscheduler/conf 下面，并配置 namenode cluster 名称；如果 NameNode 不是 HA，则修改为具体的 ip 或者主机名即可
+defaultFS="file://{{ DOLPHINSCHEDULER_HOME }}/data"    #hdfs://{具体的ip/主机名}:8020
+# 如果没有使用到 Yarn，保持以下默认值即可；如果 ResourceManager 是 HA，则配置为 ResourceManager 节点的主备 ip 或者 hostname，比如 "192.168.xx.xx,192.168.xx.xx" ;如果是单 ResourceManager 请配置 yarnHaIps="" 即可
+# 注：依赖于yarn执行的任务，为了保证执行结果判断成功，需要确保yarn信息配置正确
+yarnHaIps="127.0.0.1"
+# 如果 ResourceManager 是 HA 或者没有使用到 Yarn 保持默认值即可；如果是单 ResourceManager，请配置真实的 ResourceManager 主机名或者 ip
+singleYarnIp="127.0.0.1"
+# 资源上传根路径，支持 HDFS 和 S3，由于 hdfs 支持本地文件系统，需要确保本地文件夹存在且有读写权限
+resourceUploadPath="{{ DOLPHINSCHEDULER_HOME }}/data"
+# 具备权限创建 resourceUploadPath的用户
+hdfsRootUser="hadoop"
+# 配置 api server port
+apiServerPort="12345"
+# 在哪些机器上部署 DS 服务，本机选 localhost
+ips="localhost"
+# ssh端口，默认22
+sshPort="22"
+# master服务部署在哪台机器上
+masters="localhost"
+# worker服务部署在哪台机器上，并指定此 worker 属于哪一个 worker 组，下面示例的 default 即为组名
+workers="localhost:default"
+# 报警服务部署在哪台机器上
+alertServer="localhost"
+# 后端api服务部署在在哪台机器上
+apiServers="localhost"

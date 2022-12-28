@@ -1,0 +1,4 @@
+- hosts: deploy
+  remote_user: hadoop
+  roles:
+  - spark

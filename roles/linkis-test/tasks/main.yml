@@ -1,0 +1,35 @@
+### shell
+- name: 测试shell引擎任务
+  shell:
+    chdir: "{{ LINKIS_HOME }}"
+    cmd: source /etc/profile ~/.bashrc ; sh bin/linkis-cli -submitUser  hadoop  -engineType shell-1 -codeType shell  -code "whoami"
+  register: shell_info
+- name: 打印shell引擎任务结果
+  debug: var=shell_info.stdout_lines
+
+#### hive
+- name: 测试hive引擎任务
+  shell:
+    chdir: "{{ LINKIS_HOME }}"
+    cmd: source /etc/profile ~/.bashrc ; sh bin/linkis-cli -submitUser  hadoop  -engineType hive-{{ HIVE_VERSION }}  -codeType hql  -code "show tables"
+  register: hive_info
+- name: 打印hive引擎任务结果
+  debug: var=hive_info.stdout_lines
+
+#### spark
+- name: 测试spark引擎任务
+  shell:
+    chdir: "{{ LINKIS_HOME }}"
+    cmd: source /etc/profile ~/.bashrc ; sh bin/linkis-cli -submitUser  hadoop  -engineType spark-{{ SPARK_VERSION }} -codeType sql  -code "show tables"
+  register: spark_info
+- name: 打印spark引擎任务结果
+  debug: var=spark_info.stdout_lines
+
+##### python
+- name: 测试python2引擎任务
+  shell:
+    chdir: "{{ LINKIS_HOME }}"
+    cmd: source /etc/profile ~/.bashrc ; sh bin/linkis-cli -submitUser  hadoop  -engineType python-python2 -codeType python  -code 'print("hello, world!")'
+  register: python2_info
+- name: 打印python2引擎任务结果
+  debug: var=python2_info.stdout_lines

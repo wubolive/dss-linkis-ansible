@@ -1,0 +1,119 @@
+- name: 创建visualis库和用户
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+     - CREATE DATABASE visualis;
+     - CREATE USER 'visualis'@'%' IDENTIFIED BY 'visualis';
+     - GRANT ALL ON visualis.* TO 'visualis'@'%';
+     - GRANT ALL PRIVILEGES ON visualis.* TO 'visualis'@'%' IDENTIFIED BY 'visualis';
+     - GRANT ALL PRIVILEGES ON visualis.* TO 'visualis'@'localhost' IDENTIFIED BY 'visualis';
+     - GRANT ALL PRIVILEGES ON visualis.* TO 'visualis'@'{{ inventory_hostname }}' IDENTIFIED BY 'visualis';
+     - FLUSH PRIVILEGES;
+
+- name: 下载visualis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-server.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压visualis安装包
+  become: true
+  shell: "unzip /tmp/visualis-server.zip -d /opt/ && chown hadoop.hadoop -R {{ VISUALIS_HOME }}"
+
+- name: 安装字体库
+  become: true
+  yum:
+    name: "fontconfig-devel"
+    state: present
+
+- name: 创建字体库目录
+  become: true
+  file:
+    path: "/usr/share/fonts/visualis"
+    state: directory
+
+- name: 配置字体
+  become: true
+  shell:
+    chdir: "{{ VISUALIS_HOME }}"
+    cmd: "/usr/bin/cp -r ext/pf.ttf /usr/share/fonts/visualis/"
+
+- name: 加载字体
+  become: true
+  shell: "fc-cache –fv"
+
+- name: 初始化数据
+  shell: "mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} visualis < {{ VISUALIS_HOME }}/ext/{{ item }}"
+  with_items:
+    - davinci.sql 
+    - ddl.sql 
+
+- name: 下载visualis前端包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-web.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压visualis前端包
+  become: true
+  shell: "unzip /tmp/visualis-web.zip -d {{ VISUALIS_HOME }}/ && chown hadoop.hadoop -R {{ VISUALIS_HOME }}/build"
+
+- name: 配置代码路径
+  shell:
+    chdir: "{{ VISUALIS_HOME }}"
+    cmd: "/usr/bin/mv build web"
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/conf.d/dss/visualis.conf"
+
+- name: 重载nginx配置
+  become: true
+  command: "nginx -s reload"
+
+- name: 创建安装配置
+  template: 
+    src: "application.yml.j2"
+    dest: "{{ VISUALIS_HOME }}/conf/application.yml"
+    owner: hadoop
+    group: hadoop
+
+- name: 启动后端服务
+  shell:
+    chdir: "{{ VISUALIS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/start-visualis-server.sh"
+
+- name: 检查端口是否运行
+  wait_for: port={{ VISUALIS_PORT }} state=started delay=1 timeout=30
+
+- name: 下载visualis appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-appconn.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 安装visualis appconn
+  become: true
+  shell: "unzip /tmp/visualis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/visualis"
+
+- name: 注册appconn
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/appconn-install.sh visualis {{ ansible_ssh_host }} {{ DSS_WEB_PORT }}"
+  register: appconn_info
+
+- name: 打印注册信息
+  debug: var=appconn_info.stdout_lines

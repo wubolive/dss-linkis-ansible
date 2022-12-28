@@ -1,0 +1,6 @@
+### for DSS-Server and Eventchecker APPCONN
+MYSQL_HOST={{ hostvars[groups['mysql'][0]].ansible_ssh_host }}
+MYSQL_PORT={{ MYSQL_PORT }}
+MYSQL_DB=dss
+MYSQL_USER={{ MYSQL_USERNAME }}
+MYSQL_PASSWORD={{ MYSQL_PASSWORD }}

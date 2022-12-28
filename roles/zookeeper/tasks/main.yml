@@ -1,0 +1,58 @@
+- name: 下载安装包
+  get_url:
+    url: "https://mirrors.redmos.cn/apache/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz"
+    #url: "http://archive.apache.org/dist/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz" # 官方下载地址(很慢)
+    dest: /tmp
+    mode: 0644
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  shell: "tar zxf /tmp/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz -C /usr/local/"
+
+- name: 设置软连接
+  file: 
+    src: /usr/local/zookeeper-{{ ZOOKEEPER_VERSION }}
+    dest: "{{ ZOOKEEPER_HOME }}"
+    state: link
+
+- name: 创建目录
+  become: true
+  file:
+    path: "{{ ZOOKEEPER_HOME }}/{{ item }}"
+    state: directory
+  with_items:
+    - data
+    - logs
+
+- name: 创建配置文件
+  template: 
+    src: "zoo.cfg.j2"
+    dest: "{{ ZOOKEEPER_HOME }}/conf/zoo.cfg"
+
+- name: 配置环境变量
+  become: true
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Zookeeper Path
+      export ZOOKEEPER_HOME={{ ZOOKEEPER_HOME }}
+      export PATH=$PATH:$ZOOKEEPER_HOME/bin
+  with_items:
+    - /etc/profile
+    - ~/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - ~/.bashrc 
+
+- name: 启动zookeeper
+  shell:
+    chdir: "{{ ZOOKEEPER_HOME }}"
+    cmd: ./bin/zkServer.sh start
+
+- name: 检查端口是否运行
+  wait_for: port={{ ZOOKEEPER_PORT }} state=started delay=1 timeout=3

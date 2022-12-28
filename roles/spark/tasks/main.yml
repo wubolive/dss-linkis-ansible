@@ -1,0 +1,94 @@
+- name: 下载spark安装包
+  become: true
+  get_url:
+    url: "https://mirrors.redmos.cn/apache/spark/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz"
+    #url: "http://archive.apache.org/dist/spark/spark-{{ SPARK_VERSION }}/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz" # 官方下载地址(很慢)
+    dest: /tmp/
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz -C /opt/"
+
+- name: 设置软连接
+  become: true
+  file: 
+    src: /opt/spark-{{ SPARK_VERSION }}-bin-hadoop2.7
+    dest: "{{ SPARK_HOME }}"
+    state: link
+    owner: hadoop
+    group: hadoop
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop {{ SPARK_HOME }} /opt/spark-{{ SPARK_VERSION }}-bin-hadoop2.7"
+
+- name: 配置环境变量
+  become: true
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Spark Path
+      export SPARK_HOME={{ SPARK_HOME }}
+      export PATH=$PATH:$SPARK_HOME/bin
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: 创建配置文件
+  template: 
+    src: "{{ item }}.j2"
+    dest: "{{ SPARK_HOME }}/conf/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - spark-env.sh
+    - spark-defaults.conf
+    - metrics.properties 
+
+- name: 配置workers
+  lineinfile:
+    dest: "{{ SPARK_HOME }}/conf/workers"
+    line: "127.0.0.1"
+    create: yes
+
+- name: 配置hive
+  command: "/usr/bin/cp -r {{ HIVE_HOME }}/conf/hive-site.xml {{ SPARK_HOME }}/conf/"
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    dest: "{{ SPARK_HOME }}/jars/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 启动spark
+  shell:
+    chdir: "{{ SPARK_HOME }}"
+    cmd: bash ./sbin/start-all.sh
+  tags:
+    - restart
+
+- name: 检查端口是否运行
+  wait_for: port=7077 state=started delay=1 timeout=10
+
+- name: 测试spark命令
+  command: spark-sql -e "show databases"
+  register: spark_info
+
+- name: 打印测试结果
+  debug: var=spark_info.stdout_lines

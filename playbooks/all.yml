@@ -1,0 +1,17 @@
+- hosts: deploy
+  roles:
+  - basis
+  - java
+  - mysql
+  - nginx
+  - python3
+
+- hosts: deploy
+  remote_user: hadoop
+  roles:
+  - hadoop 
+  - hive
+  - spark
+  - linkis
+  - linkis-test
+  - dss

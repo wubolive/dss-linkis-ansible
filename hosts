@@ -1,0 +1,94 @@
+# 部署服务器
+[deploy]
+dss-service ansible_ssh_host=192.168.1.52 ansible_ssh_port=22
+
+# 数据库组
+[mysql:children]
+deploy
+
+# Hadoop组
+[hadoop:children]
+deploy
+
+[all:vars]
+### --------- Main Variables ---------------
+# Java配置
+JAVA_HOME="/usr/local/java"
+
+# MySQL 配置
+MYSQL_VERSION="5.6.49"
+MYSQL_HOME="/usr/local/mysql"
+MYSQL_DATA="{{ MYSQL_HOME }}/data"
+MYSQL_PORT="3306"
+MYSQL_USERNAME="root"
+MYSQL_PASSWORD="123456"
+
+# Hadoop 配置
+HADOOP_VERSION="2.7.2"
+HADOOP_HOME="/opt/hadoop"
+HDFS_IP="{{ hostvars[groups['hadoop'][0]].ansible_ssh_host }}"
+HDFS_PORT="9000"
+HDFS_URL="hdfs://{{ HDFS_IP }}:{{ HDFS_PORT }}"
+
+# Hive 配置
+HIVE_VERSION="2.3.3"
+HIVE_HOME="/opt/hive"
+
+# Spark 配置
+SPARK_VERSION="2.4.3"
+SPARK_HOME="/opt/spark"
+SPARK_IP="{{ hostvars[groups['hadoop'][0]].ansible_ssh_host }}"
+SPARK_PORT="7077"
+SPARK_URL="spark://{{ SPARK_IP }}:{{ SPARK_PORT }}"
+
+# Linkis 配置
+LINKIS_VERSION="1.3.0"
+LINKIS_HOME="/home/hadoop/linkis"
+LINKIS_WEB_PORT="8188"
+LINKIS_WEB_DIR="{{ LINKIS_HOME }}/web"
+LINKIS_EUREKA_PORT="20303"
+LINKIS_GATEWAY_PORT="9001"
+
+# DSS 配置
+DSS_VERSION="1.1.1"
+DSS_HOME="/home/hadoop/dss"
+DSS_WEB_PORT="8085"
+DSS_WEB_DIR="{{ DSS_HOME }}/web"
+
+# Zookeeper 配置
+ZOOKEEPER_VERSION="3.4.6"
+ZOOKEEPER_PORT="2181"
+ZOOKEEPER_HOME="/usr/local/zookeeper"
+
+# DolphinScheduler 配置
+DOLPHINSCHEDULER_VERSION="1.3.9"
+DOLPHINSCHEDULER_HOME="/opt/dolphinscheduler"
+DOLPHINSCHEDULER_TOKEN="c42f5ed1fc16c3e8b505739ab8a55c74"
+DSS_DOLPHINSCHEDULER_CLIENT_HOME="/opt/dss-dolphinscheduler-client"
+
+# Visualis 配置
+VISUALIS_VERSION="1.0.0"
+VISUALIS_HOME="/opt/visualis-server"
+VISUALIS_PORT="9088"
+
+# Qualitis 配置
+QUALITIS_VERSION="0.9.2"
+QUALITIS_HOME="/opt/qualitis"
+QUALITIS_PORT="8090"
+
+# Streamis 配置
+STREAMIS_VERSION="0.2.0"
+STREAMIS_HOME="/opt/streamis"
+STREAMIS_SERVER_PORT="9400"
+STREAMIS_WEB_PORT="9188"
+STREAMIS_WEB_DIR="{{ STREAMIS_HOME }}/dist"
+
+# Soop 配置
+SQOOP_VERSION="1.4.6"
+SQOOP_HOME="/opt/sqoop"
+
+# exchangis 配置
+EXCHANGIS_VERSION="1.0.0"
+EXCHANGIS_HOME="/opt/exchangis"
+EXCHANGIS_SERVER_PORT="9321"
+EXCHANGIS_WEB_PORT="8028"

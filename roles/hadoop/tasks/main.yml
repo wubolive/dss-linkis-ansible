@@ -1,0 +1,110 @@
+- name: 配置ssh免密
+  shell: cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+- name: 解决启动dfs提示Are you sure you want to continue connecting (yes/no)? 的问题
+  become: true
+  lineinfile:
+    dest: /etc/ssh/ssh_config
+    line: "        StrictHostKeyChecking no"
+    state: present
+
+- name: 下载hadoop安装包
+  become: true
+  get_url:
+    #url: "http://archive.apache.org/dist/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"  # 官方下载地址(很慢)
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"
+    dest: /tmp/
+    mode: 0644
+    owner: hadoop
+    group: hadoop
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/hadoop-{{ HADOOP_VERSION }}.tar.gz -C /opt/"
+
+- name: 设置软连接
+  become: true
+  file: 
+    src: /opt/hadoop-{{ HADOOP_VERSION }}
+    dest: "{{ HADOOP_HOME }}"
+    state: link
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop {{ HADOOP_HOME }} /opt/hadoop-{{ HADOOP_VERSION }}"
+
+- name: 配置环境变量
+  become: true
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Hadoop Path
+      export HADOOP_HOME={{ HADOOP_HOME }}
+      export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+      export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+      export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib"
+      export JAVA_LIBRARY_PATH=$HADOOP_HOME/lib/native
+      export PATH=$PATH:$HADOOP_HOME/bin
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: 创建hadoop目录
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - "{{ HADOOP_HOME }}/hadoopinfra/hdfs/namenode"
+    - "{{ HADOOP_HOME }}/hadoopinfra/hdfs/datanode"
+
+- name: 创建配置文件
+  template: 
+    src: "{{ item }}.j2"
+    dest: "{{ HADOOP_HOME }}/etc/hadoop/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - core-site.xml
+    - hdfs-site.xml
+    - yarn-site.xml
+    - mapred-site.xml
+
+- name: 修改hadoop-env.sh 环境变量
+  lineinfile:
+    dest: "{{ HADOOP_HOME }}/etc/hadoop/hadoop-env.sh"
+    regexp: "^export JAVA_HOME"
+    line: "export JAVA_HOME={{ JAVA_HOME }}"
+
+- name: 初始化
+  command: "{{ HADOOP_HOME }}/bin/hdfs namenode -format"
+
+- name: 启动dfs
+  command: "{{ HADOOP_HOME }}/sbin/start-dfs.sh"
+  tags:
+    - restart
+
+- name: 启动yarn
+  command: "{{ HADOOP_HOME }}/sbin/start-yarn.sh"
+  tags:
+    - restart
+
+- name: 检查端口是否运行
+  wait_for: port={{ item }} state=started delay=1 timeout=3
+  with_items:
+    - 9000    # HDFS内部通信端口
+    - 50010   # DataNode: 数据传输端口
+    - 50070   # DataNode: https服务端口
+    - 50020   # DataNode: ipc服务端口
+    - 8088    # yarn web端口

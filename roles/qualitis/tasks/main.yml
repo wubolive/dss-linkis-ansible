@@ -1,0 +1,72 @@
+- name: 创建库和用户
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    - CREATE DATABASE qualitis DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+    - GRANT ALL PRIVILEGES ON qualitis.* TO 'qualitis'@'%' IDENTIFIED BY 'qualitis';
+    - GRANT ALL PRIVILEGES ON qualitis.* TO 'qualitis'@'localhost' IDENTIFIED BY 'qualitis';
+    - GRANT ALL PRIVILEGES ON qualitis.* TO 'qualitis'@'{{ inventory_hostname }}' IDENTIFIED BY 'qualitis';
+    - FLUSH PRIVILEGES;
+
+- name: 下载qualitis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-{{ QUALITIS_VERSION }}.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压qualitis安装包
+  become: true
+  shell: "unzip /tmp/qualitis-{{ QUALITIS_VERSION }}.zip -d /opt/"
+
+- name: 设置软连接
+  become: true
+  file: 
+    src: /opt/qualitis-{{ QUALITIS_VERSION }}
+    dest: "{{ QUALITIS_HOME }}"
+    state: link
+
+- name: 设置权限
+  become: true
+  command: "chown hadoop.hadoop -R {{ QUALITIS_HOME }} /opt/qualitis-{{ QUALITIS_VERSION }}"
+
+- name: 初始化数据
+  shell: "mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} qualitis < {{ QUALITIS_HOME }}/conf/database/init.sql"
+
+- name: 创建配置
+  template:
+    src: "application-dev.yml.j2"
+    dest: "{{ QUALITIS_HOME }}/conf/application-dev.yml"
+
+- name: 启动服务
+  shell:
+    chdir: "{{ QUALITIS_HOME }}" 
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/start.sh"
+
+- name: 检查端口是否运行
+  wait_for: port={{ QUALITIS_PORT }} state=started delay=1 timeout=30
+
+- name: 下载appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-appconn.zip"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压appconn
+  become: true
+  shell: "unzip /tmp/qualitis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/qualitis"
+
+- name: 注册appconn
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/appconn-install.sh qualitis {{ ansible_ssh_host }} {{ QUALITIS_PORT }}"
+  register: appconn_info
+
+- name: 打印注册信息
+  debug: var=appconn_info.stdout_lines

@@ -1,0 +1,73 @@
+- name: 下载sqoop安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/sqoop/{{ SQOOP_VERSION }}/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压sqoop安装包
+  become: true
+  shell: "tar zxf /tmp/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz -C /opt/"
+
+- name: 设置软连接
+  become: true
+  file: 
+    src: /opt/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha
+    dest: "{{ SQOOP_HOME }}"
+    state: link
+    owner: hadoop
+    group: hadoop
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop {{ SQOOP_HOME }} /opt/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha"
+
+- name: 配置环境变量
+  become: true
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Sqoop Path
+      export SQOOP_HOME={{ SQOOP_HOME }}
+      export SQOOP_CONF_DIR={{ SQOOP_HOME }}/conf
+      export PATH=$PATH:$SQOOP_HOME/bin
+  with_items:
+    - /etc/profile
+    - /home/hadoop/.bashrc
+
+- name: 加载环境变量
+  shell: source /etc/profile ~/.bashrc
+
+- name: 创建配置文件
+  template: 
+    src: "sqoop-env.sh.j2"
+    dest: "{{ SQOOP_HOME }}/conf/sqoop-env.sh"
+    owner: hadoop
+    group: hadoop
+
+- name: 准备依赖包
+  shell: "/usr/bin/cp -r {{ item }} {{ SQOOP_HOME }}/lib/"
+  with_items:
+    - "{{ HADOOP_HOME }}/share/hadoop/common/hadoop-common-2.7.2.jar"
+    - "{{ HIVE_HOME }}/lib/hive-jdbc-2.3.3.jar"
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    dest: "{{ SQOOP_HOME }}/lib/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 测试sqoop
+  shell: "sqoop list-databases --connect jdbc:mysql://{{ hostvars[groups['mysql'][0]].ansible_ssh_host }}:{{ MYSQL_PORT }}/ --username {{ MYSQL_USERNAME }} --password {{ MYSQL_PASSWORD }}"
+  register: sqoop_info
+
+- name: 打印测试信息
+  debug: var=sqoop_info.stdout_lines

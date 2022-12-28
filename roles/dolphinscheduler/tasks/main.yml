@@ -1,0 +1,182 @@
+- name: 创建dolphinscheduler库和用户
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    - CREATE DATABASE dolphinscheduler DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+    - GRANT ALL PRIVILEGES ON dolphinscheduler.* TO 'dolphinscheduler'@'%' IDENTIFIED BY 'dolphinscheduler';
+    - GRANT ALL PRIVILEGES ON dolphinscheduler.* TO 'dolphinscheduler'@'localhost' IDENTIFIED BY 'dolphinscheduler';
+    - GRANT ALL PRIVILEGES ON dolphinscheduler.* TO 'dolphinscheduler'@'{{ inventory_hostname }}' IDENTIFIED BY 'dolphinscheduler';
+    - FLUSH PRIVILEGES;
+
+- name: 下载dolphinscheduler安装包
+  become: true
+  get_url:
+    #url: "http://dlcdn.apache.org/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz" # 官方下载地址(很慢)
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz"
+    dest: /tmp
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf /tmp/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz -C /opt/"
+
+- name: 设置权限
+  become: true
+  command: "chown hadoop.hadoop -R /opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin"
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "{{ item }}"
+    dest: /opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin/lib/
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+  with_items:
+    - "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dolphinscheduler-prod-metrics-1.1.0.jar"
+    - "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+
+- name: 创建安装配置
+  template: 
+    src: "{{ item }}.j2"
+    dest: "/opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin/conf/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - datasource.properties
+    - env/dolphinscheduler_env.sh
+    - config/install_config.conf
+
+- name: 加载环境变量
+  shell: "source /etc/profile ~/.bashrc"
+
+- name: 初始化数据库
+  shell:
+    chdir: "/opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin"
+    cmd: sh ./script/create-dolphinscheduler.sh
+
+- name: 创建dolphinscheduler程序目录
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - "{{ DOLPHINSCHEDULER_HOME }}" 
+    - "{{ DOLPHINSCHEDULER_HOME }}/data"
+
+- name: 执行安装脚本
+  shell:
+    chdir: "/opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin"
+    cmd: "source ~/.bashrc ; sh install.sh"
+
+- name: 查询运行情况
+  shell: jps | grep -E "MasterServer|WorkerServer|LoggerServer|ApiApplicationServer|AlertServer"
+  register: jps_info
+
+- name: 打印服务
+  debug: var=jps_info.stdout_lines
+
+- name: 检查端口是否运行
+  wait_for: port=12345 state=started delay=1 timeout=30
+
+### 安装dolphinscheduler-appconn
+- name: 创建token
+  command:  mysql -h{{ hostvars[groups['mysql'][0]].ansible_ssh_host }} -uroot -p{{ MYSQL_PASSWORD }} -e "{{ item }}"
+  with_items:
+    # 更改登入用户为hadoop
+    - UPDATE `dolphinscheduler`.`t_ds_user` SET `user_name` = 'hadoop', `user_password` = '3437a3834a6d403b462648428f8642b2', `user_type` = 0, `email` = 'xxx@qq.com', `phone` = '', `tenant_id` = 1, `create_time` = '2018-03-27 15:48:50', `update_time` = '2022-11-29 15:07:53', `queue` = 'default' WHERE `id` = 1;
+    # 创建租户
+    - INSERT INTO `dolphinscheduler`.`t_ds_tenant` (`id`, `tenant_code`, `tenant_name`, `description`, `queue_id`, `create_time`, `update_time`) VALUES (1, 'hadoop', 'hadoop', '', 1, '2022-11-29 15:06:39', '2022-11-29 15:06:39');
+    # 创建token
+    - INSERT INTO `dolphinscheduler`.`t_ds_access_token` (`id`, `user_id`, `token`, `expire_time`, `create_time`, `update_time`) VALUES (1, 1, 'c42f5ed1fc16c3e8b505739ab8a55c74', '2032-12-31 00:00:00', '2022-11-29 15:10:12', '2022-11-29 15:10:12');
+
+- name: 创建安装配置
+  template:
+    src: "appconn.properties.j2"
+    dest: "{{ DSS_HOME }}/dss-appconns/dolphinscheduler/appconn.properties"
+    owner: hadoop
+    group: hadoop
+
+- name: 注册appconn
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/appconn-install.sh dolphinscheduler {{ ansible_ssh_host }} 12345"
+  register: appconn_info
+
+- name: 打印注册信息
+  debug: var=appconn_info.stdout_lines
+
+- name: 更新dss-dolphinscheduler-token包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-token-1.1.0.jar"
+    dest: "{{ DSS_HOME }}/lib/dss-framework/dss-framework-project-server/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/conf.d/dss/dolphinscheduler.conf"
+    owner: hadoop
+    group: hadoop
+
+- name: 重载nginx配置
+  become: true
+  shell: nginx -s reload
+
+- name: 配置前往调度中心的url
+  lineinfile:
+    dest: "{{ DSS_HOME }}/conf/dss-workflow-server.properties"
+    state: present
+    line: wds.dss.workflow.schedulerCenter.url=http://{{ ansible_ssh_host }}:{{ DSS_WEB_PORT }}/dolphinscheduler
+
+- name: 下载dss-dolphinscheduler-client安装包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-client.zip"
+    dest: /tmp/
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压dss-dolphinscheduler-client安装包
+  become: true
+  shell: "unzip /tmp/dss-dolphinscheduler-client.zip -d /opt/ && chown hadoop.hadoop -R /opt/dss-dolphinscheduler-client"
+
+- name: 创建dss-dolphinscheduler-client配置
+  template:
+    src: "linkis.properties.j2"
+    dest: "{{ DSS_DOLPHINSCHEDULER_CLIENT_HOME }}/conf/linkis.properties"
+    owner: hadoop
+    group: hadoop
+
+- name: 重启dss服务
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: source /etc/profile ~/.bashrc ; sh sbin/dss-start-all.sh
+  register: restart_info
+
+- name: 查看重启信息
+  debug: var=restart_info.stdout_lines
+
+- name: 检查端口是否运行
+  wait_for: port={{ item }} state=started delay=1 timeout=3
+  with_items:
+    - 9002   # project-server
+    - 9003   # orchestrator-server
+    - 9004   # apiservice-server
+    - 9005   # dss-workflow-server
+    - 9006   # dss-flow-execution-server
+    - 9008   # dss-scriptis-server
+    - 9210   # dss-guide-server
+

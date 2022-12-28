@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+      <name>hive.exec.scratchdir</name>
+      <value>hdfs://127.0.0.1:9000/data/hive/tmp</value>
+    </property>
+    <property>
+       <name>hive.metastore.warehouse.dir</name>
+       <value>hdfs://127.0.0.1:9000/data/hive/warehouse</value>
+    </property>
+    <property>
+      <name>hive.querylog.location</name>
+      <value>hdfs://127.0.0.1:9000/data/hive/log</value>
+    </property>
+    <property>
+      <name>hive.metastore.schema.verification</name>
+      <value>false</value>
+    </property>
+    <property>
+      <name>javax.jdo.option.ConnectionURL</name>
+      <value>jdbc:mysql://{{ hostvars[groups['mysql'][0]].ansible_ssh_host }}:3306/hive?createDatabaseIfNotExist=true</value>
+    </property>
+    <property>
+      <name>javax.jdo.option.ConnectionDriverName</name>
+       <value>com.mysql.jdbc.Driver</value>
+    </property>
+    <property>
+      <name>javax.jdo.option.ConnectionUserName</name>
+      <value>{{ MYSQL_USERNAME }}</value>
+    </property>
+    <property>
+      <name>javax.jdo.option.ConnectionPassword</name>
+      <value>{{ MYSQL_PASSWORD }}</value>
+    </property>
+    <property>
+       <name>system:java.io.tmpdir</name>
+       <value>/tmp/hive/java</value>
+    </property>
+    <property>
+       <name>system:user.name</name>
+       <value>hadoop</value>
+    </property>
+    <property>
+        <name>hive.exec.local.scratchdir</name>
+        <value>{{ HIVE_HOME }}/tmp/${system:user.name}</value>
+        <description>Local scratch space for Hive jobs</description>
+    </property>
+    <property>
+        <name>hive.downloaded.resources.dir</name>
+        <value>{{ HIVE_HOME }}/tmp/${hive.session.id}_resources</value>
+        <description>Temporary local directory for added resources in the remote file system.</description>
+    </property>
+    <property>
+        <name>hive.server2.logging.operation.log.location</name>
+        <value>{{ HIVE_HOME }}/tmp/root/operation_logs</value>
+        <description>Top level directory where operation logs are stored if logging functionality is enabled</description>
+    </property>
+</configuration>

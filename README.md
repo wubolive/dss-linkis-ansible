@@ -1,14 +1,8 @@
-# DSS+Linkis Ansible一键安装脚本
+# DSS+Linkis Ansible 单机一键安装脚本
 
 ## 一、简介
 
 为解决繁琐的部署流程，简化安装步骤，本脚本提供一键安装最新版本的DSS+Linkis环境；部署包中的软件采用我自己编译的安装包，并且为最新版本：`DSS1.1.1` + `Linkis1.3.0`。
-
-获取安装包：https://github.com/wubolive/dss-linkis-ansible/releases
-
-如从Github上下载慢，也可使用如下方式获取安装包：
-- 链接: https://pan.baidu.com/s/1NYVFqyVwMdMQUBjmeUtGmQ?pwd=kddf
-- 提取码: kddf
 
 ### 1.1 版本介绍
 
@@ -38,6 +32,7 @@
 **要求**：
 
 - 本脚本仅在`CentOS 7`系统上测试过，请确保安装的服务器为`CentOS 7`。
+- 仅安装DSS+Linkis服务器内存至少16G，安装全部服务内存至少32G。
 - 安装前请关闭服务器防火墙及SElinux，并使用`root`用户进行操作。
 - 安装服务器必须通畅的访问互联网，脚本需要yum下载一些基础软件。
 - 保证服务器未安装任何软件，包括不限于`java`、`mysql`、`nginx`等，最好是全新系统。
@@ -61,12 +56,10 @@ $ ssh-copy-id root@192.168.1.52
 
 ```bash
 ### 获取安装包
-$ wget https://github.com/wubolive/dss-linkis-ansible/releases/download/v1.0.1/dss-linkis-ansible.tar.gz
-
-### 解压安装包
-$ tar zxvf dss-linkis-ansible.tar.gz
+$ git clone https://github.com/wubolive/dss-linkis-ansible.git
 $ cd dss-linkis-ansible
-# 目录说明
+
+### 目录说明
 dss-linkis-ansible
 ├── ansible.cfg    # ansible 配置文件
 ├── hosts          # hosts主机及变量配置

@@ -1,0 +1,53 @@
+- name: 下载jdk安装包
+  get_url:
+    url: "https://repo.huaweicloud.com/java/jdk/8u171-b11/jdk-8u171-linux-x64.tar.gz"
+    dest: /tmp
+    mode: 0644
+    force: yes
+    validate_certs: no
+
+- name: 解压源码包
+  shell: "tar zxf /tmp/jdk-8u171-linux-x64.tar.gz -C /usr/local/"
+
+- name: 设置软连接
+  file:
+    src: /usr/local/jdk1.8.0_171
+    dest: "{{ JAVA_HOME }}"
+    state: link 
+    force: yes
+
+- name: 设置/usr/bin/java软连接
+  file: 
+    src: "{{ JAVA_HOME }}/bin/java"
+    dest: "/usr/bin/java"
+    state: link
+
+- name: 配置环境变量
+  lineinfile:
+    dest: "{{ item }}"
+    state: present
+    line: |
+      # Java Path
+      export JAVA_HOME={{ JAVA_HOME }}
+      export JRE_HOME={{ JAVA_HOME }}/jre
+      export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib:$CLASSPATH
+      export PATH=$JAVA_HOME/bin:$PATH
+  with_items:
+    - /etc/profile
+    - ~/.bashrc
+    - /home/hadoop/.bashrc
+
+- name: source env
+  shell: "source {{ item }}"
+  with_items:
+    - /etc/profile
+    - ~/.bashrc
+
+- name: 获取java版本
+  command: "java -version"
+  register: java_version
+
+- name: 打印pip版本
+  debug: var=java_version.stderr_lines
+
+

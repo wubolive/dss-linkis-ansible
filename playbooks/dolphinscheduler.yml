@@ -1,0 +1,8 @@
+- hosts: deploy
+  roles:
+  - zookeeper
+
+- hosts: deploy
+  remote_user: hadoop
+  roles:
+  - dolphinscheduler

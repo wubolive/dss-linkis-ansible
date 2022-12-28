@@ -1,0 +1,156 @@
+- name: 创建linkis程序目录
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - "{{ LINKIS_HOME }}" 
+    - "{{ LINKIS_WEB_DIR }}"
+    - /data
+    - /opt/apache-linkis-{{ LINKIS_VERSION }}
+    - /opt/apache-linkis-{{ LINKIS_VERSION }}-web
+
+- name: 下载linkis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压linkis安装包
+  become: true
+  shell: "tar zxf /tmp/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}/"
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop /data /opt/apache-linkis-{{ LINKIS_VERSION }}"
+
+- name: 创建安装配置
+  template: 
+    src: "{{ item }}.j2"
+    dest: "/opt/apache-linkis-{{ LINKIS_VERSION }}/deploy-config/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - db.sh
+    - linkis-env.sh
+
+- name: 加载环境变量
+  shell: "source /etc/profile ~/.bashrc"
+
+- name: 创建hdfs:///tmp/linkis
+  shell: "hadoop fs -mkdir -p /tmp/linkis ; hadoop fs -chmod -R 777 /tmp/linkis"
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    dest: "/opt/apache-linkis-{{ LINKIS_VERSION }}/linkis-package/lib/{{ item }}"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+  with_items:
+    - linkis-commons/public-module/
+    - linkis-spring-cloud-services/linkis-mg-gateway/
+
+- name: 修改安装脚本
+  lineinfile:
+    dest: "/opt/apache-linkis-{{ LINKIS_VERSION }}/bin/install.sh"
+    regexp: '^read'
+    line: "idx=2"
+
+- name: 安装linkis
+  shell:
+    chdir: "/opt/apache-linkis-{{ LINKIS_VERSION }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/install.sh"
+  register: install_info
+
+- name: 打印安装信息
+  debug: var=install_info.stdout_lines
+
+- name: 创建token配置
+  template: 
+    src: "token.properties.j2"
+    dest: "{{ LINKIS_HOME }}/conf/token.properties"
+    owner: hadoop
+    group: hadoop
+
+- name: 复制依赖包
+  shell: "/usr/bin/cp -r {{ HIVE_HOME }}/lib/{{ item }} {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/hive/dist/v2.3.3/lib/"
+  with_items:
+    - datanucleus-api-jdo-4.2.4.jar 
+    - datanucleus-rdbms-4.1.19.jar
+    - javax.jdo-3.2.0-m3.jar
+    - jdo-api-3.0.1.jar
+
+- name: 启动linkis服务
+  shell:
+    chdir: "{{ LINKIS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh sbin/linkis-start-all.sh"
+  register: start_info
+  tags:
+    - restart
+
+- name: 打印linkis启动信息
+  debug: var=start_info.stdout_lines
+  tags:
+    - restart
+
+- name: 检查端口是否运行
+  wait_for: port={{ item }} state=started delay=1 timeout=3
+  with_items:
+    - 20303   # LINKIS-MG-EUREKA
+    - 9001    # LINKIS-MG-GATEWAY
+    - 9101    # LINKIS-CG-LINKISMANAGER
+    - 9102    # LINKIS-CG-ENGINECONNMANAGER
+    - 9103    # LINKIS-CG-ENGINEPLUGIN
+    - 9104    # LINKIS-CG-ENTRANCE
+    - 9105    # LINKIS-PS-PUBLICSERVICE
+
+### 安装linkis前端 ###
+
+- name: 下载linkis前端包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz"
+    dest: "/tmp/"
+    force: yes
+    owner: hadoop
+    group: hadoop
+    validate_certs: no
+
+- name: 解压linkis前端包
+  become: true
+  shell: "tar zxf /tmp/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}-web/"
+
+- name: 创建linkis前端目录
+  become: true
+  file:
+    path: "{{ LINKIS_WEB_DIR }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+
+- name: 复制前端代码
+  shell:
+    chdir: /opt/apache-linkis-{{ LINKIS_VERSION }}-web
+    cmd: "/usr/bin/cp -r dist/* {{ LINKIS_WEB_DIR }}/"
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "linkis.conf.j2"
+    dest: /etc/nginx/conf.d/linkis.conf
+
+- name: 重载nginx配置
+  become: true
+  shell: nginx -s reload
+
+- name: 检查端口是否运行
+  wait_for: port={{ LINKIS_WEB_PORT }} state=started delay=1 timeout=10
