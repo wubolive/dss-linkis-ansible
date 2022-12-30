@@ -114,6 +114,7 @@ $ tail -f ~/linkis/logs/*.log ~/dss/logs/*.log
 ### 启动服务（如服务器重启可使用此命令一建启动）
 $ ansible-playbook playbooks/all.yml -t restart
 # 启动其它服务
+$ sh /usr/local/zookeeper/bin/zkServer.sh start
 $ su - hadoop
 $ cd /opt/dolphinscheduler/bin &&  sh start-all.sh 
 $ cd /opt/visualis-server/bin && sh start-visualis-server.sh
@@ -121,3 +122,4 @@ $ cd /opt/qualitis/bin/ && sh start.sh
 $ cd /opt/streamis/streamis-server/bin/ && sh start-streamis-server.sh
 $ cd /opt/exchangis/sbin/ && ./daemon.sh start server
 ```
+使用问题请访问官方QA文档：https://docs.qq.com/doc/DSGZhdnpMV3lTUUxq
