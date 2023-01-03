@@ -170,7 +170,7 @@
   debug: var=restart_info.stdout_lines
 
 - name: 检查端口是否运行
-  wait_for: port={{ item }} state=started delay=1 timeout=3
+  wait_for: port={{ item }} state=started delay=1 timeout=30
   with_items:
     - 9002   # project-server
     - 9003   # orchestrator-server

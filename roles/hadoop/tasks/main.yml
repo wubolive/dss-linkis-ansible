@@ -101,7 +101,7 @@
     - restart
 
 - name: 检查端口是否运行
-  wait_for: port={{ item }} state=started delay=1 timeout=3
+  wait_for: port={{ item }} state=started delay=1 timeout=30
   with_items:
     - 9000    # HDFS内部通信端口
     - 50010   # DataNode: 数据传输端口

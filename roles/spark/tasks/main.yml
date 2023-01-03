@@ -84,7 +84,7 @@
     - restart
 
 - name: 检查端口是否运行
-  wait_for: port=7077 state=started delay=1 timeout=10
+  wait_for: port=7077 state=started delay=1 timeout=30
 
 - name: 测试spark命令
   command: spark-sql -e "show databases"

@@ -55,4 +55,4 @@
     cmd: ./bin/zkServer.sh start
 
 - name: 检查端口是否运行
-  wait_for: port={{ ZOOKEEPER_PORT }} state=started delay=1 timeout=3
+  wait_for: port={{ ZOOKEEPER_PORT }} state=started delay=1 timeout=30

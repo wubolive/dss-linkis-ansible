@@ -103,7 +103,7 @@
     - restart
 
 - name: 检查端口是否运行
-  wait_for: port={{ item }} state=started delay=1 timeout=3
+  wait_for: port={{ item }} state=started delay=1 timeout=30
   with_items:
     - 20303   # LINKIS-MG-EUREKA
     - 9001    # LINKIS-MG-GATEWAY
@@ -153,4 +153,4 @@
   shell: nginx -s reload
 
 - name: 检查端口是否运行
-  wait_for: port={{ LINKIS_WEB_PORT }} state=started delay=1 timeout=10
+  wait_for: port={{ LINKIS_WEB_PORT }} state=started delay=1 timeout=30
