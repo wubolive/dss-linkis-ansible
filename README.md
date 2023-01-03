@@ -51,6 +51,10 @@ $ yum -y install ansible
 ### 配置免密
 $ ssh-keygen -t rsa
 $ ssh-copy-id root@192.168.1.52
+
+### 关闭防火墙及SELinux
+$ systemctl stop firewalld.service && systemctl disable firewalld.service
+$ sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config && setenforce 0
 ```
 ### 3.2 部署linkis+dss
 
