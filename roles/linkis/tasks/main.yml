@@ -32,10 +32,8 @@
 
 - name: 删除linkis-gateway-server-support-1.1.1.jar(#4167)
   file:
-    path: "/opt/apache-linkis-{{ LINKIS_VERSION }}/linkis-package/lib/linkis-spring-cloud-services/linkis-mg-gateway"
+    path: "/opt/apache-linkis-{{ LINKIS_VERSION }}/linkis-package/lib/linkis-spring-cloud-services/linkis-mg-gateway/linkis-gateway-server-support-1.1.1.jar"
     state: absent
-  with_items:
-    - linkis-gateway-server-support-1.1.1.jar
 
 - name: 创建安装配置
   template: 
