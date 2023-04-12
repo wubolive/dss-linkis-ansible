@@ -1,14 +1,5 @@
-- name: 下载安装包
-  get_url:
-    url: "https://mirrors.redmos.cn/apache/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz"
-    #url: "http://archive.apache.org/dist/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz" # 官方下载地址(很慢)
-    dest: /tmp
-    mode: 0644
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
-  shell: "tar zxf /tmp/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz -C /usr/local/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz -C /usr/local/"
 
 - name: 设置软连接
   file: 

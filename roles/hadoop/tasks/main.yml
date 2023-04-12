@@ -8,21 +8,9 @@
     line: "        StrictHostKeyChecking no"
     state: present
 
-- name: 下载hadoop安装包
-  become: true
-  get_url:
-    #url: "http://archive.apache.org/dist/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"  # 官方下载地址(很慢)
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/hadoop-{{ HADOOP_VERSION }}.tar.gz -C /opt/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/hadoop-{{ HADOOP_VERSION }}.tar.gz -C /opt/"
 
 - name: 设置软连接
   become: true

@@ -12,6 +12,8 @@ deploy
 
 [all:vars]
 ### --------- Main Variables ---------------
+WORKSPACE_HOME="{{ lookup('env', 'PWD') }}"
+
 # Java配置
 JAVA_HOME="/usr/local/java"
 

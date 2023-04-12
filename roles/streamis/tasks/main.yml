@@ -18,20 +18,9 @@
     - /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist
     - "{{ STREAMIS_HOME }}"
 
-- name: 下载安装包
-  become: true
-  get_url:
-    url: "http://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist/"
 
 - name: 设置权限
   become: true
@@ -67,19 +56,9 @@
 - name: 检查端口是否运行
   wait_for: port={{ STREAMIS_SERVER_PORT }} state=started delay=1 timeout=30
 
-- name: 下载streamis前端代码包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-{{ STREAMIS_VERSION }}-dist.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压streamis前端代码包
   become: true
-  shell: "unzip /tmp/streamis-{{ STREAMIS_VERSION }}-dist.zip -d {{ STREAMIS_HOME }}"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/streamis-{{ STREAMIS_VERSION }}-dist.zip -d {{ STREAMIS_HOME }}"
 
 - name: 创建nginx配置
   become: true
@@ -94,19 +73,9 @@
 - name: 检查端口是否运行
   wait_for: port={{ STREAMIS_WEB_PORT }} state=started delay=1 timeout=30
 
-- name: 下载appconn
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-appconn.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 安装appconn
   become: true
-  shell: "unzip /tmp/streamis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/streamis"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/streamis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/streamis"
 
 - name: 注册appconn
   shell:

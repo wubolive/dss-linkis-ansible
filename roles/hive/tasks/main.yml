@@ -1,17 +1,6 @@
-- name: 下载安装包
-  become: true
-  get_url:
-    url: "http://repo.huaweicloud.com/apache/hive/hive-{{ HIVE_VERSION }}/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz"
-    dest: /tmp
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz -C /opt/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz -C /opt/"
 
 - name: 设置软连接
   become: true
@@ -71,15 +60,11 @@
     - hive-site.xml
     - hive-env.sh
 
-- name: 下载依赖的jar包
+- name: 拷贝依赖的jar包
   become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+  copy:
+    src: "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
     dest: "{{ HIVE_HOME }}/lib/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
 
 - name: 初始化schema
   shell: "schematool -dbType mysql -initSchema"

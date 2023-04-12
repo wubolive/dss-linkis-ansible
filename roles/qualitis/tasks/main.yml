@@ -7,19 +7,9 @@
     - GRANT ALL PRIVILEGES ON qualitis.* TO 'qualitis'@'{{ inventory_hostname }}' IDENTIFIED BY 'qualitis';
     - FLUSH PRIVILEGES;
 
-- name: 下载qualitis安装包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-{{ QUALITIS_VERSION }}.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压qualitis安装包
   become: true
-  shell: "unzip /tmp/qualitis-{{ QUALITIS_VERSION }}.zip -d /opt/"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/qualitis-{{ QUALITIS_VERSION }}.zip -d /opt/"
 
 - name: 设置软连接
   become: true
@@ -48,19 +38,9 @@
 - name: 检查端口是否运行
   wait_for: port={{ QUALITIS_PORT }} state=started delay=1 timeout=30
 
-- name: 下载appconn包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-appconn.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压appconn
   become: true
-  shell: "unzip /tmp/qualitis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/qualitis"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/qualitis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown hadoop.hadoop -R {{ DSS_HOME }}/dss-appconns/qualitis"
 
 - name: 注册appconn
   shell:

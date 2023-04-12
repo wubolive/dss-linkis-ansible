@@ -12,19 +12,9 @@
     - /opt/apache-linkis-{{ LINKIS_VERSION }}
     - /opt/apache-linkis-{{ LINKIS_VERSION }}-web
 
-- name: 下载linkis安装包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压linkis安装包
   become: true
-  shell: "tar zxf /tmp/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}/"
 
 - name: 配置权限
   become: true
@@ -51,15 +41,10 @@
 - name: 创建hdfs:///tmp/linkis
   shell: "hadoop fs -mkdir -p /tmp/linkis ; hadoop fs -chmod -R 777 /tmp/linkis"
 
-- name: 下载依赖的jar包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+- name: 拷贝依赖的jar包
+  copy:
+    src:  "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
     dest: "/opt/apache-linkis-{{ LINKIS_VERSION }}/linkis-package/lib/{{ item }}"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
   with_items:
     - linkis-commons/public-module/
     - linkis-spring-cloud-services/linkis-mg-gateway/
@@ -120,19 +105,9 @@
 
 ### 安装linkis前端 ###
 
-- name: 下载linkis前端包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压linkis前端包
   become: true
-  shell: "tar zxf /tmp/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}-web/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz -C /opt/apache-linkis-{{ LINKIS_VERSION }}-web/"
 
 - name: 创建linkis前端目录
   become: true

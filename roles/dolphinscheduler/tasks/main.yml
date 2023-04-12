@@ -7,37 +7,23 @@
     - GRANT ALL PRIVILEGES ON dolphinscheduler.* TO 'dolphinscheduler'@'{{ inventory_hostname }}' IDENTIFIED BY 'dolphinscheduler';
     - FLUSH PRIVILEGES;
 
-- name: 下载dolphinscheduler安装包
-  become: true
-  get_url:
-    #url: "http://dlcdn.apache.org/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz" # 官方下载地址(很慢)
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz"
-    dest: /tmp
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz -C /opt/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz -C /opt/"
 
 - name: 设置权限
   become: true
   command: "chown hadoop.hadoop -R /opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin"
 
-- name: 下载依赖的jar包
-  become: true
-  get_url:
-    url: "{{ item }}"
-    dest: /opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin/lib/
-    force: yes
+- name: 拷贝依赖的jar包
+  copy:
     owner: hadoop
     group: hadoop
-    validate_certs: no
+    src: "{{ item }}"
+    dest: "/opt/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin/lib/"
   with_items:
-    - "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dolphinscheduler-prod-metrics-1.1.0.jar"
-    - "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    - "{{ WORKSPACE_HOME }}/download/dolphinscheduler-prod-metrics-1.1.0.jar"
+    - "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
 
 - name: 创建安装配置
   template: 
@@ -112,14 +98,11 @@
   debug: var=appconn_info.stdout_lines
 
 - name: 更新dss-dolphinscheduler-token包
-  become: true
-  get_url:
-    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-token-1.1.0.jar"
-    dest: "{{ DSS_HOME }}/lib/dss-framework/dss-framework-project-server/"
-    force: yes
+  copy:
     owner: hadoop
     group: hadoop
-    validate_certs: no
+    src: "{{ WORKSPACE_HOME }}/download/dss-dolphinscheduler-token-1.1.0.jar"
+    dest: "{{ DSS_HOME }}/lib/dss-framework/dss-framework-project-server/"
 
 - name: 创建nginx配置
   become: true
@@ -139,19 +122,9 @@
     state: present
     line: wds.dss.workflow.schedulerCenter.url=http://{{ ansible_ssh_host }}:{{ DSS_WEB_PORT }}/dolphinscheduler
 
-- name: 下载dss-dolphinscheduler-client安装包
-  become: true
-  get_url:
-    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-client.zip"
-    dest: /tmp/
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压dss-dolphinscheduler-client安装包
   become: true
-  shell: "unzip /tmp/dss-dolphinscheduler-client.zip -d /opt/ && chown hadoop.hadoop -R /opt/dss-dolphinscheduler-client"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/dss-dolphinscheduler-client.zip -d /opt/ && chown hadoop.hadoop -R /opt/dss-dolphinscheduler-client"
 
 - name: 创建dss-dolphinscheduler-client配置
   template:

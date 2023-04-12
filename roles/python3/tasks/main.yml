@@ -20,20 +20,10 @@
     - xz-devel
     - libffi-devel
 
-- name: 下载源码包
-  become: true
-  get_url:
-    url: "https://repo.huaweicloud.com/python/3.7.0/Python-3.7.0.tar.xz"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压源码包
   shell: 
     chdir: /tmp/
-    cmd: "tar xf Python-3.7.0.tar.xz"
+    cmd: "tar xf {{ WORKSPACE_HOME }}/download/Python-3.7.0.tar.xz"
 
 - name: 配置python3
   shell:
@@ -51,11 +41,20 @@
     dest: /usr/bin/python3
     state: link
 
+- name: 检查pip3是否已存在
+  stat: path=/usr/bin/pip3
+  register: pip3_stat
+
+- name: 移除原pip3
+  command: mv /usr/bin/pip3 /usr/bin/pip3.bak
+  when: pip3_stat.stat.exists
+
 - name: 设置pip3软连接
   file:
     src: /usr/local/python3/bin/pip3
     dest: /usr/bin/pip3
     state: link
+    force: yes
 
 - name: 获取python3版本信息
   command: "python3 -V"

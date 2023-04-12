@@ -74,7 +74,9 @@
   ignore_errors: yes
 
 - name: 配置阿里云yum源
-  copy: src=Centos-7.repo dest=/etc/yum.repos.d/CentOS-Base.repo
+  copy:
+    src: Centos-7.repo
+    dest: /etc/yum.repos.d/CentOS-Base.repo
 
 - name: 安装基础软件
   yum:
@@ -92,23 +94,14 @@
     - lsof
     - epel-release
 
-- name: 下载pip安装包
-  get_url:
-    #url: "https://pypi.tuna.tsinghua.edu.cn/packages/69/81/52b68d0a4de760a2f1979b0931ba7889202f302072cc7a0d614211bc7579/pip-18.0.tar.gz"
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/python/pip/pip-18.0.tar.gz"
-    dest: /tmp/
-    mode: 0644
-    force: yes
-    validate_certs: no
-
 - name: 解压pip安装包
   shell: 
-    chdir: /tmp/
+    chdir: "{{ WORKSPACE_HOME }}/download"
     cmd: tar zxf pip-18.0.tar.gz
 
 - name: 升级pip版本 | 安装pip-18
   shell:
-    chdir: /tmp/pip-18.0
+    chdir: "{{ WORKSPACE_HOME }}/download/pip-18.0"
     cmd: python setup.py install
 
 - name: 升级pip版本 | 升级到最新版
