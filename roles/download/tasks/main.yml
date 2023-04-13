@@ -25,9 +25,9 @@
 - name: 下载mysql安装包
   become: true
   get_url:
-    url: "https://mirrors.cloud.tencent.com/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  #腾讯镜像站
+#    url: "https://mirrors.cloud.tencent.com/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  #腾讯镜像站
 #    url: "http://mirrors.aliyun.com/mysql/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  # 阿里镜像站
-#    url: "http://repo.huaweicloud.com/mysql/Downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 华为镜像站
+    url: "http://repo.huaweicloud.com/mysql/Downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 华为镜像站
 #    url: "http://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 清华大学镜像站
     dest: "{{ WORKSPACE_HOME }}/download/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"
     mode: 0644
