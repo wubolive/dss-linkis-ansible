@@ -15,20 +15,9 @@
     - /appcom/tmp/uploads
     - /appcom/tmp/wds/scheduler
 
-- name: 下载dss安装包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/DolphinScheduler/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-dss-{{ DSS_VERSION }}/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-dss-{{ DSS_VERSION }}/"
 
 - name: 配置权限
   become: true
@@ -93,20 +82,9 @@
     - 9008   # dss-scriptis-server
     - 9210   # dss-guide-server
 
-- name: 下载dss安装包   
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/DolphinScheduler/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "unzip /tmp/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip -d /opt/wedatasphere-dss-{{ DSS_VERSION }}-web"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip -d /opt/wedatasphere-dss-{{ DSS_VERSION }}-web"
 
 - name: 创建dss前端目录
   become: true

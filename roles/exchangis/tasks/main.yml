@@ -21,20 +21,9 @@
     owner: hadoop
     group: hadoop
 
-- name: 下载安装包
-  become: true
-  get_url:
-    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis{{ EXCHANGIS_VERSION }}/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz -C {{ EXCHANGIS_HOME }}"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz -C {{ EXCHANGIS_HOME }}"
 
 - name: 设置权限
   become: true
@@ -77,20 +66,9 @@
 - name: 检查端口是否运行
   wait_for: port={{ EXCHANGIS_SERVER_PORT }} state=started delay=1 timeout=30
 
-- name: 下载前端代码包
-  become: true
-  get_url:
-    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis1.0.0/dist.zip"
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 压前端安装包
   become: true
-  shell: "unzip /tmp/dist.zip -d {{ EXCHANGIS_HOME }}/ && chown -R hadoop.hadoop {{ EXCHANGIS_HOME }}/dist"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/dist.zip -d {{ EXCHANGIS_HOME }}/ && chown -R hadoop.hadoop {{ EXCHANGIS_HOME }}/dist"
 
 - name: 创建nginx配置
   become: true
@@ -105,19 +83,9 @@
 - name: 检查端口是否运行
   wait_for: port={{ EXCHANGIS_WEB_PORT }} state=started delay=1 timeout=30
 
-- name: 下载appconn包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Exchangis/exchangis-appconn.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压appconn包
   become: true
-  shell: "unzip /tmp/exchangis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown -R hadoop.hadoop {{ DSS_HOME }}/dss-appconns/exchangis"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/exchangis-appconn.zip -d {{ DSS_HOME }}/dss-appconns/ && chown -R hadoop.hadoop {{ DSS_HOME }}/dss-appconns/exchangis"
 
 - name: 注册appconn
   shell:
@@ -128,19 +96,9 @@
 - name: 打印注册信息
   debug: var=appconn_info.stdout_lines
 
-- name: 下载sqoop物料引擎
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Linkis/engineconn-plugin/sqoop-engineconn.zip"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 安装sqoop物料引擎
   become: true
-  shell: "unzip /tmp/sqoop-engineconn.zip -d {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/ && chown -R hadoop.hadoop {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/sqoop"
+  shell: "unzip {{ WORKSPACE_HOME }}/download/sqoop-engineconn.zip -d {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/ && chown -R hadoop.hadoop {{ LINKIS_HOME }}/lib/linkis-engineconn-plugins/sqoop"
 
 - name: 重启engineplugin服务
   shell: 

@@ -1,18 +1,6 @@
-- name: 下载spark安装包
-  become: true
-  get_url:
-    url: "https://mirrors.redmos.cn/apache/spark/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz"
-    #url: "http://archive.apache.org/dist/spark/spark-{{ SPARK_VERSION }}/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz" # 官方下载地址(很慢)
-    dest: /tmp/
-    mode: 0644
-    owner: hadoop
-    group: hadoop
-    force: yes
-    validate_certs: no
-
 - name: 解压源码包
   become: true
-  shell: "tar zxf /tmp/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz -C /opt/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz -C /opt/"
 
 - name: 设置软连接
   become: true
@@ -66,15 +54,12 @@
 - name: 配置hive
   command: "/usr/bin/cp -r {{ HIVE_HOME }}/conf/hive-site.xml {{ SPARK_HOME }}/conf/"
 
-- name: 下载依赖的jar包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+- name: 拷贝依赖的jar包
+  copy:
+    src: "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
     dest: "{{ SPARK_HOME }}/jars/"
-    force: yes
     owner: hadoop
     group: hadoop
-    validate_certs: no
 
 - name: 启动spark
   shell:

@@ -1,0 +1,264 @@
+- name: 创建文件下载目录
+  file:
+    path: "{{ WORKSPACE_HOME }}/download"
+    state: directory
+
+- name: 下载pip安装包
+  become: true
+  get_url:
+#    url: "https://pypi.tuna.tsinghua.edu.cn/packages/69/81/52b68d0a4de760a2f1979b0931ba7889202f302072cc7a0d614211bc7579/pip-18.0.tar.gz"
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/python/pip/pip-18.0.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/pip-18.0.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载jdk安装包
+  become: true
+  get_url:
+    url: "https://repo.huaweicloud.com/java/jdk/8u171-b11/jdk-8u171-linux-x64.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/jdk-8u171-linux-x64.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载mysql安装包
+  become: true
+  get_url:
+#    url: "https://mirrors.cloud.tencent.com/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  #腾讯镜像站
+#    url: "http://mirrors.aliyun.com/mysql/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"  # 阿里镜像站
+    url: "http://repo.huaweicloud.com/mysql/Downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 华为镜像站
+#    url: "http://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz" # 清华大学镜像站
+    dest: "{{ WORKSPACE_HOME }}/download/mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载依赖的jar包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
+    dest: "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
+    force: no
+    validate_certs: no
+
+- name: 下载python源码包
+  become: true
+  get_url:
+    url: "https://repo.huaweicloud.com/python/3.7.0/Python-3.7.0.tar.xz"
+    dest: "{{ WORKSPACE_HOME }}/download/Python-3.7.0.tar.xz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载hadoop安装包
+  become: true
+  get_url:
+    #url: "http://archive.apache.org/dist/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"  # 官方下载地址(很慢)
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/hadoop-{{ HADOOP_VERSION }}.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载hive安装包
+  become: true
+  get_url:
+    url: "http://repo.huaweicloud.com/apache/hive/hive-{{ HIVE_VERSION }}/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/apache-hive-{{ HIVE_VERSION }}-bin.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载spark安装包
+  become: true
+  get_url:
+    url: "https://mirrors.redmos.cn/apache/spark/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz"
+    #url: "http://archive.apache.org/dist/spark/spark-{{ SPARK_VERSION }}/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz" # 官方下载地址(很慢)
+    dest: "{{ WORKSPACE_HOME }}/download/spark-{{ SPARK_VERSION }}-bin-hadoop2.7.tgz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载linkis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/apache-linkis-{{ LINKIS_VERSION }}-incubating-bin.tar.gz"
+    force: no
+    validate_certs: no
+
+- name: 下载linkis前端包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/linkis/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/apache-linkis-{{ LINKIS_VERSION }}-incubating-web-bin.tar.gz"
+    force: no
+    validate_certs: no
+
+- name: 下载dss安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/DolphinScheduler/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载dss前端安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/DolphinScheduler/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载dolphinscheduler安装包
+  become: true
+  get_url:
+    #url: "http://dlcdn.apache.org/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz" # 官方下载地址(很慢)
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/dolphinscheduler/{{ DOLPHINSCHEDULER_VERSION }}/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/apache-dolphinscheduler-{{ DOLPHINSCHEDULER_VERSION }}-bin.tar.gz"
+    force: no
+    validate_certs: no
+
+- name: 下载dolphinscheduler依赖的jar包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dolphinscheduler-prod-metrics-1.1.0.jar"
+    dest: "{{ WORKSPACE_HOME }}/download/dolphinscheduler-prod-metrics-1.1.0.jar"
+    force: no
+    validate_certs: no
+
+- name: 更新dss-dolphinscheduler-token包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-token-1.1.0.jar"
+    dest: "{{ WORKSPACE_HOME }}/download/dss-dolphinscheduler-token-1.1.0.jar"
+    force: no
+    validate_certs: no
+
+- name: 下载dss-dolphinscheduler-client安装包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/DolphinScheduler/dss-dolphinscheduler-client.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/dss-dolphinscheduler-client.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载visualis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-server.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/visualis-server.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载visualis前端包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-web.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/visualis-web.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载visualis appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Visualis/{{ VISUALIS_VERSION }}/visualis-appconn.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/visualis-appconn.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载qualitis安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-{{ QUALITIS_VERSION }}.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/qualitis-{{ QUALITIS_VERSION }}.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载qualitis appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Qualitis/qualitis-appconn.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/qualitis-appconn.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载streamis安装包
+  become: true
+  get_url:
+    url: "http://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/wedatasphere-streamis-{{ STREAMIS_VERSION }}-dist.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载streamis前端代码包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-{{ STREAMIS_VERSION }}-dist.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/streamis-{{ STREAMIS_VERSION }}-dist.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载streamis appconn
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Streamis/{{ STREAMIS_VERSION }}/streamis-appconn.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/streamis-appconn.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载sqoop物料引擎
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Linkis/engineconn-plugin/sqoop-engineconn.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/sqoop-engineconn.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载sqoop安装包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/sqoop/{{ SQOOP_VERSION }}/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz"
+    force: no
+    validate_certs: no
+
+- name: 下载exchangis安装包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis{{ EXCHANGIS_VERSION }}/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz"
+    dest: "{{ WORKSPACE_HOME }}/download/wedatasphere-exchangis-{{ EXCHANGIS_VERSION }}.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载exchangis前端代码包
+  become: true
+  get_url:
+    url: "https://osp-1257653870.cos.ap-guangzhou.myqcloud.com/WeDatasphere/Exchangis/exchangis1.0.0/dist.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/dist.zip"
+    mode: 0644
+    force: no
+    validate_certs: no
+
+- name: 下载exchangis appconn包
+  become: true
+  get_url:
+    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/WeDatasphere/Exchangis/exchangis-appconn.zip"
+    dest: "{{ WORKSPACE_HOME }}/download/exchangis-appconn.zip"
+    force: no
+    validate_certs: no
+
+- name: 下载安装包
+  get_url:
+    url: "https://mirrors.redmos.cn/apache/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz"
+    #url: "http://archive.apache.org/dist/zookeeper/zookeeper-{{ ZOOKEEPER_VERSION }}/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz" # 官方下载地址(很慢)
+    dest: "{{ WORKSPACE_HOME }}/download/zookeeper-{{ ZOOKEEPER_VERSION }}.tar.gz"
+    mode: 0644
+    force: no
+    validate_certs: no

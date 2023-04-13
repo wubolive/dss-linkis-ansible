@@ -76,6 +76,9 @@ $ vim hosts
 [deploy]
 dss-service ansible_ssh_host=192.168.1.52 ansible_ssh_port=22
 
+### 下载安装包到download目录(如果下载失败，可以手动下载放到该目录)
+$ ansible-playbook playbooks/download.yml
+
 ### 一键安装Linkis+DSS
 $ ansible-playbook playbooks/all.yml
 ......

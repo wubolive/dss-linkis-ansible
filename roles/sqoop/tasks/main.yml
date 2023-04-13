@@ -1,16 +1,6 @@
-- name: 下载sqoop安装包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/apache/sqoop/{{ SQOOP_VERSION }}/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz"
-    dest: "/tmp/"
-    force: yes
-    owner: hadoop
-    group: hadoop
-    validate_certs: no
-
 - name: 解压sqoop安装包
   become: true
-  shell: "tar zxf /tmp/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz -C /opt/"
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/sqoop-{{ SQOOP_VERSION }}.bin__hadoop-2.0.4-alpha.tar.gz -C /opt/"
 
 - name: 设置软连接
   become: true
@@ -55,15 +45,12 @@
     - "{{ HADOOP_HOME }}/share/hadoop/common/hadoop-common-2.7.2.jar"
     - "{{ HIVE_HOME }}/lib/hive-jdbc-2.3.3.jar"
 
-- name: 下载依赖的jar包
-  become: true
-  get_url:
-    url: "http://mirrors.obs.cn-north-276.intelligentmininglab.com/mysql/connector-java/mysql-connector-java-5.1.49.jar"
-    dest: "{{ SQOOP_HOME }}/lib/"
-    force: yes
+- name: 拷贝依赖的jar包
+  copy:
     owner: hadoop
     group: hadoop
-    validate_certs: no
+    src: "{{ WORKSPACE_HOME }}/download/mysql-connector-java-5.1.49.jar"
+    dest: "{{ SQOOP_HOME }}/lib/"
 
 - name: 测试sqoop
   shell: "sqoop list-databases --connect jdbc:mysql://{{ hostvars[groups['mysql'][0]].ansible_ssh_host }}:{{ MYSQL_PORT }}/ --username {{ MYSQL_USERNAME }} --password {{ MYSQL_PASSWORD }}"
