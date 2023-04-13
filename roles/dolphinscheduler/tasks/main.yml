@@ -54,6 +54,7 @@
   with_items:
     - "{{ DOLPHINSCHEDULER_HOME }}" 
     - "{{ DOLPHINSCHEDULER_HOME }}/data"
+    - "/exec"
 
 - name: 执行安装脚本
   shell:
