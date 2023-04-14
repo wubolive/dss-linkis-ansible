@@ -47,7 +47,7 @@
     line: "  idx=2"
 
 - name: 创建dss数据库
-  command: "{{ MYSQL_HOME }}/bin/mysql -h127.0.0.1 -uroot -p{{ MYSQL_PASSWORD }} -e 'CREATE DATABASE dss;'"
+  command: "mysql -h127.0.0.1 -uroot -p{{ MYSQL_PASSWORD }} -e 'CREATE DATABASE dss;'"
 
 - name: 安装dss
   shell:

@@ -1,9 +1,10 @@
-- name: 判断系统版本
-  fail:
-    msg: "抱歉, 目前仅支持CentOS 7版本的系统!"
-  when:
-    - ansible_facts['distribution'] != "CentOS"
-    - ansible_facts['distribution_major_version'] != "7"
+#  TODO
+#- name: 判断系统版本
+#  fail:
+#    msg: "抱歉, 目前仅支持CentOS 7版本的系统!"
+#  when:
+#    - ansible_facts['distribution'] != "CentOS"
+#    - ansible_facts['distribution_major_version'] != "7"
 
 - name: 设置时区 Asia/Shanghai
   timezone:
@@ -66,18 +67,6 @@
     insertafter: '^%wheel'
     line: '%hadoop  ALL=(ALL)  NOPASSWD: ALL'
 
-- name: 创建repo备份目录
-  file: path=/etc/yum.repos.d/backup state=directory
-
-- name: 备份主机repo文件
-  shell: mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/backup/
-  ignore_errors: yes
-
-- name: 配置阿里云yum源
-  copy:
-    src: Centos-7.repo
-    dest: /etc/yum.repos.d/CentOS-Base.repo
-
 - name: 安装基础软件
   yum:
     name: "{{ item }}"
@@ -92,20 +81,6 @@
     - expect
     - rsync
     - lsof
-    - epel-release
-
-- name: 解压pip安装包
-  shell: 
-    chdir: "{{ WORKSPACE_HOME }}/download"
-    cmd: tar zxf pip-18.0.tar.gz
-
-- name: 升级pip版本 | 安装pip-18
-  shell:
-    chdir: "{{ WORKSPACE_HOME }}/download/pip-18.0"
-    cmd: python setup.py install
-
-- name: 升级pip版本 | 升级到最新版
-  command: "pip install --upgrade pip --index-url https://pypi.douban.com/simple/ --trusted-host pypi.douban.com"
 
 - name: 获取pip版本
   command: "pip -V"

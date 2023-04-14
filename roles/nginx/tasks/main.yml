@@ -1,13 +1,3 @@
-- name: 配置nginx yum源
-  yum_repository:
-    name: nginx
-    description: nginx repo
-    file: nginx
-    baseurl: http://nginx.org/packages/centos/7/$basearch/
-    gpgcheck: no
-    mode: 0644
-    state: present
-
 - name: 安装nginx
   yum: name=nginx state=present
 
