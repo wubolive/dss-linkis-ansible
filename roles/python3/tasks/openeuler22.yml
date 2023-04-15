@@ -22,13 +22,6 @@
     dest: /usr/bin/python
     state: link
 
-- name: 设置pip3软连接
-  file:
-    src: /usr/local/python3/bin/pip3
-    dest: /usr/bin/pip3
-    state: link
-    force: yes
-
 - name: 获取python3版本信息
   command: "python3 -V"
   register: python3_version
