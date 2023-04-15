@@ -4,8 +4,8 @@
     - ansible_facts['distribution'] == "CentOS"
     - ansible_facts['distribution_major_version'] == "7"
 
-#- name: 切换openEuler22操作系统
-#  import_tasks: openeuler22.yml
-#  when:
-#    - ansible_facts['distribution'] == "openEuler"
-#    - ansible_facts['distribution_major_version'] == "22"
+- name: 切换openEuler22操作系统
+  import_tasks: openeuler22.yml
+  when:
+    - ansible_facts['distribution'] == "openEuler"
+    - ansible_facts['distribution_major_version'] == "22"
