@@ -1,0 +1,37 @@
+- name: 检查pip3是否已存在
+  stat: path=/usr/bin/pip3
+  register: pip3_stat
+
+- name: 移除原pip3
+  command: mv /usr/bin/pip3 /usr/bin/pip3.bak
+  when: pip3_stat.stat.exists
+
+- name: 编译安装python3
+  shell:
+    cmd: "yum install -y python3 pip3"
+
+- name: 设置python3软连接
+  file:
+    src: /usr/local/python3/bin/python3
+    dest: /usr/bin/python3
+    state: link
+
+- name: 设置python软连接
+  file:
+    src: /usr/local/python3/bin/python3
+    dest: /usr/bin/python
+    state: link
+
+- name: 设置pip3软连接
+  file:
+    src: /usr/local/python3/bin/pip3
+    dest: /usr/bin/pip3
+    state: link
+    force: yes
+
+- name: 获取python3版本信息
+  command: "python3 -V"
+  register: python3_version
+
+- name: 打印python3版本
+  debug: var=python3_version

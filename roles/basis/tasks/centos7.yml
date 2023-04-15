@@ -1,0 +1,118 @@
+- name: 判断系统版本
+  fail:
+    msg: "抱歉, 目前仅支持CentOS 7版本的系统!"
+  when:
+    - ansible_facts['distribution'] != "CentOS"
+    - ansible_facts['distribution_major_version'] != "7"
+
+- name: 设置时区 Asia/Shanghai
+  timezone:
+    name: Asia/Shanghai
+
+- name: 设置主机名
+  hostname: 'name={{ inventory_hostname }}'
+
+- name: 设置hosts
+  lineinfile:
+    path: /etc/hosts
+    insertbefore: '^127\.0\.0\.1'
+    line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }} namenode"
+
+- name: 添加本地解析
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    line: "{{ ansible_default_ipv4.address }} {{ item }}"
+  with_items:
+    - dss-apiservice-server
+    - dss-flow-entrance
+    - dss-framework-orchestrator-server-dev
+    - dss-framework-project-server
+    - dss-guide-server
+    - dss-scriptis-server
+    - dss-workflow-server-dev
+    - exchangis-server
+    - linkis-cg-engineconn
+    - linkis-cg-engineconnmanager
+    - linkis-cg-engineplugin
+    - linkis-cg-entrance
+    - linkis-cg-linkismanager
+    - linkis-mg-eureka
+    - linkis-mg-gateway
+    - linkis-ps-publicservice
+    - streamis-server
+
+- name: 创建hadoop组
+  group: name=hadoop
+
+- name: 创建hadoop用户
+  user:
+    name: hadoop
+    group: hadoop
+    shell: /bin/bash
+    generate_ssh_key: yes
+    password: "{{ 'hadoop' | password_hash('sha512') }}"
+
+- name: 设置 authorized 密钥
+  authorized_key:
+    user: hadoop
+    state: present
+    key: "{{ lookup('file', '/root/.ssh/id_rsa.pub') }}"
+
+- name: 修改sudoers给hadoop提权
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    insertafter: '^%wheel'
+    line: '%hadoop  ALL=(ALL)  NOPASSWD: ALL'
+
+- name: 创建repo备份目录
+  file: path=/etc/yum.repos.d/backup state=directory
+
+- name: 备份主机repo文件
+  shell: mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/backup/
+  ignore_errors: yes
+
+- name: 配置阿里云yum源
+  copy:
+    src: Centos-7.repo
+    dest: /etc/yum.repos.d/CentOS-Base.repo
+
+- name: 安装基础软件
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - telnet
+    - tar
+    - sed
+    - dos2unix
+    - unzip
+    - zip
+    - expect
+    - rsync
+    - lsof
+    - epel-release
+
+- name: 解压pip安装包
+  shell:
+    chdir: "{{ WORKSPACE_HOME }}/download"
+    cmd: tar zxf pip-18.0.tar.gz
+
+- name: 升级pip版本 | 安装pip-18
+  shell:
+    chdir: "{{ WORKSPACE_HOME }}/download/pip-18.0"
+    cmd: python setup.py install
+
+- name: 升级pip版本 | 升级到最新版
+  command: "pip install --upgrade pip --index-url https://pypi.douban.com/simple/ --trusted-host pypi.douban.com"
+
+- name: 获取pip版本
+  command: "pip -V"
+  register: pip_version
+
+- name: 打印pip版本
+  debug: var=pip_version.stdout
+
+- name: 安装画图模块matplotlib
+  command: "pip install matplotlib --index-url https://pypi.douban.com/simple/ --trusted-host pypi.douban.com"

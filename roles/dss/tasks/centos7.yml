@@ -1,0 +1,126 @@
+- name: 创建dss程序目录
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - "{{ DSS_HOME }}"
+    - "{{ DSS_WEB_DIR }}"
+    - /opt/wedatasphere-dss-{{ DSS_VERSION }}
+    - /opt/wedatasphere-dss-{{ DSS_VERSION }}-web
+    - /appcom/tmp
+    - /appcom/tmp/dss
+    - /appcom/tmp/uploads
+    - /appcom/tmp/wds/scheduler
+
+- name: 解压源码包
+  become: true
+  shell: "tar zxf {{ WORKSPACE_HOME }}/download/wedatasphere-dss-{{ DSS_VERSION }}-dist.tar.gz -C /opt/wedatasphere-dss-{{ DSS_VERSION }}/"
+
+- name: 配置权限
+  become: true
+  shell: "chown -R hadoop.hadoop /opt/wedatasphere-dss-{{ DSS_VERSION }} /opt/wedatasphere-dss-{{ DSS_VERSION }}-web"
+
+- name: 创建安装配置
+  template:
+    src: "{{ item }}.j2"
+    dest: "/opt/wedatasphere-dss-{{ DSS_VERSION }}/config/{{ item }}"
+    owner: hadoop
+    group: hadoop
+  with_items:
+    - db.sh
+    - config.sh
+
+- name: 创建appconn脚本
+  template:
+    src: "appconn-install.sh.j2"
+    dest: "/opt/wedatasphere-dss-{{ DSS_VERSION }}/bin/appconn-install.sh"
+    owner: hadoop
+    group: hadoop
+
+- name: 修改安装脚本
+  lineinfile:
+    dest: "/opt/wedatasphere-dss-{{ DSS_VERSION }}/bin/executeSQL.sh"
+    regexp: '^  read'
+    line: "  idx=2"
+
+- name: 创建dss数据库
+  command: "{{ MYSQL_HOME }}/bin/mysql -h127.0.0.1 -uroot -p{{ MYSQL_PASSWORD }} -e 'CREATE DATABASE dss;'"
+
+- name: 安装dss
+  shell:
+    chdir: "/opt/wedatasphere-dss-{{ DSS_VERSION }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh bin/install.sh"
+  register: install_info
+
+- name: 打印安装信息
+  debug: var=install_info.stdout_lines
+
+- name: 启动dss服务
+  shell:
+    chdir: "{{ DSS_HOME }}"
+    cmd: "source /etc/profile ~/.bashrc ; sh sbin/dss-start-all.sh"
+  register: start_info
+  tags:
+    - restart
+
+- name: 打印dss启动信息
+  debug: var=start_info.stdout_lines
+  tags:
+    - restart
+
+- name: 检查端口是否运行
+  wait_for: port={{ item }} state=started delay=1 timeout=30
+  with_items:
+    - 9002   # project-server
+    - 9003   # orchestrator-server
+    - 9004   # apiservice-server
+    - 9005   # dss-workflow-server
+    - 9006   # dss-flow-execution-server
+    - 9008   # dss-scriptis-server
+    - 9210   # dss-guide-server
+
+- name: 解压源码包
+  become: true
+  shell: "unzip {{ WORKSPACE_HOME }}/download/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip -d /opt/wedatasphere-dss-{{ DSS_VERSION }}-web"
+
+- name: 创建dss前端目录
+  become: true
+  file:
+    path: "{{ DSS_WEB_DIR }}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+
+- name: 复制前端代码
+  shell:
+    chdir: /opt/wedatasphere-dss-{{ DSS_VERSION }}-web
+    cmd: "/usr/bin/cp -r dist/* {{ DSS_WEB_DIR }}/"
+
+- name: 创建nginx配置
+  become: true
+  template:
+    src: "dss.conf.j2"
+    dest: /etc/nginx/conf.d/dss.conf
+
+- name: 创建nginx子目录
+  become: true
+  file:
+    path: "/etc/nginx/conf.d/dss"
+    state: directory
+
+- name: 重载nginx配置
+  become: true
+  shell: nginx -s reload
+
+- name: 检查端口是否运行
+  wait_for: port={{ LINKIS_WEB_PORT }} state=started delay=1 timeout=30
+
+- name: 打印访问信息
+  debug:
+    msg:
+      - "*****************************************************************"
+      - "             访问 http://{{ ansible_ssh_host }} 查看访问信息               "
+      - "*****************************************************************"
