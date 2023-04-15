@@ -1,13 +1,13 @@
 - name: 切换CentOS7操作系统
   import_tasks: centos7.yml
+  no_log: true
   when:
     - ansible_facts['distribution'] == "CentOS"
     - ansible_facts['distribution_major_version'] == "7"
-  no_log: true
 
 - name: 切换openEuler22操作系统
   import_tasks: openeuler22.yml
+  no_log: true
   when:
     - ansible_facts['distribution'] == "openEuler"
     - ansible_facts['distribution_major_version'] == "22"
-  no_log: true
