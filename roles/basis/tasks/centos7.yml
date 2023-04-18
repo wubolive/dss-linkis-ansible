@@ -1,6 +1,6 @@
 - name: 判断系统版本
   fail:
-    msg: "抱歉, 目前仅支持CentOS 7版本的系统!"
+    msg: "抱歉, 目前仅支持CentOS 7、openEuler 22版本的系统!"
   when:
     - ansible_facts['distribution'] != "CentOS"
     - ansible_facts['distribution_major_version'] != "7"
@@ -12,16 +12,22 @@
 - name: 设置主机名
   hostname: 'name={{ inventory_hostname }}'
 
+- name: 删除hosts里的dss-service
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '.*dss-service.*'
+
 - name: 设置hosts
   lineinfile:
     path: /etc/hosts
-    insertbefore: '^127\.0\.0\.1'
+    insertbefore: '^127\.0\.0\.1*'
     line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }} namenode"
 
 - name: 添加本地解析
   lineinfile:
     path: /etc/hosts
-    insertbefore: '^127\.0\.0\.1'
+    insertbefore: '^127\.0\.0\.1*'
     state: present
     line: "{{ ansible_default_ipv4.address }} {{ item }}"
   with_items:

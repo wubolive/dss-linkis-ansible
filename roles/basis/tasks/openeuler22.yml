@@ -1,6 +1,6 @@
 - name: 判断系统版本
   fail:
-    msg: "抱歉, 目前仅支持openEuler 22版本的系统!"
+    msg: "抱歉, 目前仅支持CentOS 7、openEuler 22版本的系统!"
   when:
     - ansible_facts['distribution'] != "openEuler"
     - ansible_facts['distribution_major_version'] != "22"
@@ -11,6 +11,12 @@
 
 - name: 设置主机名
   hostname: 'name={{ inventory_hostname }}'
+
+- name: 删除hosts里的dss-service
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '.*dss-service.*'
 
 - name: 设置hosts
   lineinfile:

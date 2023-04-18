@@ -1,3 +1,14 @@
+- name: 判断资源文件是否存在
+  stat:
+    path: "{{ WORKSPACE_HOME }}/download/wedatasphere-dss-web-{{ DSS_VERSION }}-dist.zip"
+  register: file_status
+
+- name: 判断资源文件不存在，推出后续执行
+  fail:
+    msg: "抱歉，资源文件不存在, 请先执行:\n ansible-playbook playbooks/download.yml"
+  when:
+    - file_status.stat.exists == False
+
 - name: 切换CentOS7操作系统
   import_tasks: centos7.yml
   when:
