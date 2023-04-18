@@ -12,6 +12,18 @@
 - name: 设置主机名
   hostname: 'name={{ inventory_hostname }}'
 
+- name: 删除hosts ^127.*
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '^127.*'
+
+- name: 删除hosts .::.
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '.*\:\:.*'
+
 - name: 设置hosts
   lineinfile:
     path: /etc/hosts
