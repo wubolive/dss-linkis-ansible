@@ -12,18 +12,6 @@
 - name: 设置主机名
   hostname: 'name={{ inventory_hostname }}'
 
-- name: 删除hosts ^127.*
-  lineinfile:
-    dest:  /etc/hosts
-    state: absent
-    regexp: '^127.*'
-
-- name: 删除hosts .::.
-  lineinfile:
-    dest:  /etc/hosts
-    state: absent
-    regexp: '.*\:\:.*'
-
 - name: 设置hosts
   lineinfile:
     path: /etc/hosts
@@ -33,6 +21,7 @@
 - name: 添加本地解析
   lineinfile:
     path: /etc/hosts
+    insertbefore: '^127\.0\.0\.1'
     state: present
     line: "{{ ansible_default_ipv4.address }} {{ item }}"
   with_items:
