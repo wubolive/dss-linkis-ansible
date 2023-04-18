@@ -5,7 +5,7 @@
 
 - name: 判断资源文件不存在，推出后续执行
   fail:
-    msg: "抱歉，资源文件不存在, 请先执行:\n ansible-playbook playbooks/download.yml"
+    msg: "抱歉，资源文件不存在, 请先执行: ansible-playbook playbooks/download.yml"
   when:
     - file_status.stat.exists == False
 
